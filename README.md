@@ -27,7 +27,9 @@ NB: The specified versions are what was used during development, no other versio
 
 TODO (There's literally 0 line of code right now, so yeah, this will come later on).
 
-##TODOS
+---
+
+## TODOS
 
 Next steps in the development:
 
