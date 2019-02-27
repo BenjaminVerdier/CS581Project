@@ -3,6 +3,12 @@ import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
+
+import pyqtgraph as pg
+
 class SpecWidget(QWidget):
 
     def __init__(self):
@@ -10,8 +16,9 @@ class SpecWidget(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.grid = QGridLayout()
-        self.setLayout(self.grid)
+        self.vertical = QVBoxLayout()
+        self.setMaximumWidth(800)
+        self.setLayout(self.vertical)
 
         self.initTfc()
         self.initSpacing()
@@ -23,15 +30,16 @@ class SpecWidget(QWidget):
     @pyqtSlot()
     def changeSliderValue(self, spinner, slider):
         slider.setValue(int(spinner.value() * 1000))
+        self.drawKey()
 
     @pyqtSlot()
     def changeSpinnerValue(self, spinner, slider):
         spinner.setValue(slider.value() / 1000)
+        self.drawKey()
 
     def initTfc(self):
         # Distance to first cut
         # slider + spinner
-        tfcWidget = QWidget()
         tfcLayout = QVBoxLayout()
 
         self.tfcSpinBox = QDoubleSpinBox()
@@ -47,20 +55,23 @@ class SpecWidget(QWidget):
 
         self.tfcSpinBox.valueChanged.connect(lambda: self.changeSliderValue(self.tfcSpinBox, self.tfcSlider))
         self.tfcSlider.valueChanged.connect(lambda: self.changeSpinnerValue(self.tfcSpinBox, self.tfcSlider))
+        # Label
+        tfcLabel = QLabel("Distance to first cut (inches):")
 
         tfcLayout.addWidget(self.tfcSpinBox)
         tfcLayout.addWidget(self.tfcSlider)
 
-        tfcWidget.setLayout(tfcLayout)
-        # Label
-        tfcLabel = QLabel("Distance to first cut (inches)")
-        self.grid.addWidget(tfcLabel, 0,0)
-        self.grid.addWidget(tfcWidget, 0,1)
+        superLayout = QHBoxLayout()
+
+        superLayout.addWidget(tfcLabel)
+        superLayout.addSpacing(50)
+        superLayout.addLayout(tfcLayout)
+
+        self.vertical.addLayout(superLayout)
 
     def initSpacing(self):
         # Distance to first cut
         # slider + spinner
-        spacingWidget = QWidget()
         spacingLayout = QVBoxLayout()
 
         self.spacingSpinBox = QDoubleSpinBox()
@@ -76,15 +87,19 @@ class SpecWidget(QWidget):
 
         self.spacingSpinBox.valueChanged.connect(lambda: self.changeSliderValue(self.spacingSpinBox, self.spacingSlider))
         self.spacingSlider.valueChanged.connect(lambda: self.changeSpinnerValue(self.spacingSpinBox, self.spacingSlider))
+        # Label
+        spacingLabel = QLabel("Distance between cuts (inches):")
 
         spacingLayout.addWidget(self.spacingSpinBox)
         spacingLayout.addWidget(self.spacingSlider)
 
-        spacingWidget.setLayout(spacingLayout)
-        # Label
-        spacingLabel = QLabel("Distance between cuts (inches)")
-        self.grid.addWidget(spacingLabel, 1,0)
-        self.grid.addWidget(spacingWidget, 1,1)
+        superLayout = QHBoxLayout()
+
+        superLayout.addWidget(spacingLabel)
+        superLayout.addSpacing(28)
+        superLayout.addLayout(spacingLayout)
+
+        self.vertical.addLayout(superLayout)
 
     def initPinIncrement(self):
         # Distance to first cut
@@ -105,70 +120,102 @@ class SpecWidget(QWidget):
 
         self.pinIncrementSpinBox.valueChanged.connect(lambda: self.changeSliderValue(self.pinIncrementSpinBox, self.pinIncrementSlider))
         self.pinIncrementSlider.valueChanged.connect(lambda: self.changeSpinnerValue(self.pinIncrementSpinBox, self.pinIncrementSlider))
+        # Label
+        pinIncrementLabel = QLabel("Pin height increment (inches):")
 
         pinIncrementLayout.addWidget(self.pinIncrementSpinBox)
         pinIncrementLayout.addWidget(self.pinIncrementSlider)
 
-        pinIncrementWidget.setLayout(pinIncrementLayout)
-        # Label
-        pinIncrementLabel = QLabel("Pin height increment (inches)")
-        self.grid.addWidget(pinIncrementLabel, 2,0)
-        self.grid.addWidget(pinIncrementWidget, 2,1)
+        superLayout = QHBoxLayout()
+
+        superLayout.addWidget(pinIncrementLabel)
+        superLayout.addSpacing(45)
+        superLayout.addLayout(pinIncrementLayout)
+
+        self.vertical.addLayout(superLayout)
 
     def initBittingSpecs(self):
         bittingWidget = QWidget()
         layout = QVBoxLayout()
 
+        hlayout = QHBoxLayout()
+
+        pinNumLabel = QLabel("Number of pins:")
+
         self.pinNumberSpinBox = QSpinBox()
         self.pinNumberSpinBox.setRange(1,10)
         self.pinNumberSpinBox.setSingleStep(1)
-        self.pinNumberSpinBox.setValue(1)
+        self.pinNumberSpinBox.setValue(10)
         self.pinNumberSpinBox.valueChanged.connect(self.changePinNumber)
 
-        self.slidersLayout = QHBoxLayout()
-        self.pinSliders = [QSlider(Qt.Vertical)]
-        for i in range(len(self.pinSliders)):
-            self.pinSliders[i].setMinimum(0)
-            self.pinSliders[i].setMaximum(9)
-            self.pinSliders[i].setTickPosition(QSlider.TicksLeft)
-            self.pinSliders[i].setTickInterval(1)
-            #TODO: add label for pin position underneath the sliders
-            self.pinSliders[i].valueChanged.connect(lambda: self.changePinHeight(i))
-            self.slidersLayout.addWidget(self.pinSliders[i])
+        hlayout.addWidget(pinNumLabel)
+        hlayout.addWidget(self.pinNumberSpinBox)
+        hlayout.addStretch()
 
-        layout.addWidget(self.pinNumberSpinBox)
+        self.slidersLayout = QHBoxLayout()
+        self.pinSliders = []
+        for i in range(10):
+            pin = QSlider(Qt.Vertical)
+            pin.setMinimum(0)
+            pin.setMaximum(9)
+            pin.setTickPosition(QSlider.TicksLeft)
+            pin.setTickInterval(1)
+            #TODO: add label for pin position underneath the sliders
+            pin.valueChanged.connect(lambda: self.changePinHeight(i))
+            self.pinSliders.append(pin)
+            if i < self.pinNumberSpinBox.value():
+                self.slidersLayout.addWidget(pin)
+            else:
+                self.pinSliders[i].hide()
+                self.slidersLayout.addSpacing(58)
+
+        layout.addLayout(hlayout)
         layout.addLayout(self.slidersLayout)
 
         bittingWidget.setLayout(layout)
 
+        self.vertical.addWidget(bittingWidget)
 
-        self.grid.addWidget(bittingWidget, 3,0,25,2)
+    def drawKey(self):
+        figure = self.parent().figure
+
+        tfc = self.tfcSpinBox.value()
+        increment = self.pinIncrementSpinBox.value()
+        spacing = self.spacingSpinBox.value()
+        pinNumber = self.pinNumberSpinBox.value()
+
+        x = [0]
+        y = [0]
+        for i in range(pinNumber):
+            x.append(tfc + i*spacing - 0.05)
+            y.append(-increment*self.pinSliders[i].value())
+            x.append(tfc + i*spacing + 0.05)
+            y.append(-increment*self.pinSliders[i].value())
+
+        #last point
+        lp = [x[-1],y[-1]]
+        lp[0] = lp[0] + spacing
+
+        self.parent().pt.setData(x,y)
 
     @pyqtSlot()
     def changePinHeight(self, pinNumber):
-        print("This is slider number " + str(pinNumber))
+        self.drawKey()
 
     @pyqtSlot()
     def changePinNumber(self):
+        while self.slidersLayout.count():
+            item = self.slidersLayout.takeAt(0)
+            self.slidersLayout.removeItem(item)
         val = self.pinNumberSpinBox.value()
-        if len(self.pinSliders) < val:
-            for i in range(len(self.pinSliders), val):
-                print("Pouet")
-                pin = QSlider(Qt.Vertical)
-                pin.setMinimum(0)
-                pin.setMaximum(9)
-                pin.setTickPosition(QSlider.TicksLeft)
-                pin.setTickInterval(1)
-                #TODO: add label for pin position underneath the sliders
-                pin.valueChanged.connect(lambda: self.changePinHeight(i))
-                self.pinSliders.append(pin)
-                self.slidersLayout.addWidget(pin)
-        else:
-            for i, pin in enumerate(self.pinSliders):
-                if i >= val:
-                    pin.hide()
-                else:
-                    pin.show()
+        for i in range(10):
+            if i < val:
+                self.pinSliders[i].show()
+                self.slidersLayout.addWidget(self.pinSliders[i])
+            else:
+                self.pinSliders[i].hide()
+                self.slidersLayout.addSpacing(58)
+        self.drawKey()
 
 class MainWidget(QWidget):
 
@@ -177,14 +224,21 @@ class MainWidget(QWidget):
         self.initUI()
 
     def initUI(self):
-        layout = QHBoxLayout()
+        layout = QGridLayout()
         self.setLayout(layout)
 
-        specs = SpecWidget()
-        layout.addWidget(specs)
+        self.figure = Figure()
 
-        specs2 = SpecWidget()
-        layout.addWidget(specs2)
+        self.canvas = pg.GraphicsLayoutWidget()
+        layout.addWidget(self.canvas,0,0,5,15)
+        self.plot = self.canvas.addPlot()
+        self.plot.setRange(xRange=(-1,3), yRange=(-2,1))
+        self.pt = self.plot.plot(pen='w')
+
+        specs = SpecWidget()
+        specs.setMaximumHeight(500)
+        layout.addWidget(specs,15,0)
+        specs.drawKey()
 
         self.show()
 
@@ -198,6 +252,6 @@ class MainWindow(QMainWindow):
         mw = MainWidget()
         self.setCentralWidget(mw)
         self.setWindowTitle('Key Designer')
-        #self.resize(800,600)
+        self.resize(800,1200)
 
         self.show()
