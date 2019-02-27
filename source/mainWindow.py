@@ -3,10 +3,6 @@ import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
-from matplotlib.figure import Figure
-
 import pyqtgraph as pg
 
 class SpecWidget(QWidget):
@@ -177,8 +173,6 @@ class SpecWidget(QWidget):
         self.vertical.addWidget(bittingWidget)
 
     def drawKey(self):
-        figure = self.parent().figure
-
         tfc = self.tfcSpinBox.value()
         increment = self.pinIncrementSpinBox.value()
         spacing = self.spacingSpinBox.value()
@@ -226,8 +220,6 @@ class MainWidget(QWidget):
     def initUI(self):
         layout = QGridLayout()
         self.setLayout(layout)
-
-        self.figure = Figure()
 
         self.canvas = pg.GraphicsLayoutWidget()
         layout.addWidget(self.canvas,0,0,5,15)
