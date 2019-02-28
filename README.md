@@ -33,6 +33,6 @@ TODO (There's literally 0 line of code right now, so yeah, this will come later 
 
 Next steps in the development:
 
-- Add height of key
-- Add rest of key shape in sketch window
+- Add dropdown menu to choose key bitting specs standards and blanks
+- Add csv with a number of key bitting specs standards
 - Add .stl file generation
