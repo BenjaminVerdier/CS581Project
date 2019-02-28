@@ -21,6 +21,13 @@ class SpecWidget(QWidget):
         self.initPinIncrement()
         self.initBittingSpecs()
 
+        #TODO: add sliders and spinners for that.
+        #TODO: create function to add slider and spinner with string tag instead of copy pasting the same function everytime
+        self.keyHeight = .335
+        self.keyLength = 2
+        self.macs = 7
+        self.rootCut = .031
+
         self.show()
 
     @pyqtSlot()
@@ -42,12 +49,12 @@ class SpecWidget(QWidget):
         self.tfcSpinBox.setRange(0., 1.)
         self.tfcSpinBox.setSingleStep(.001)
         self.tfcSpinBox.setDecimals(3)
-        self.tfcSpinBox.setValue(.2)
+        self.tfcSpinBox.setValue(.231)
 
         self.tfcSlider = QSlider(Qt.Horizontal)
         self.tfcSlider.setMinimum(0)
         self.tfcSlider.setMaximum(1000)
-        self.tfcSlider.setValue(200)
+        self.tfcSlider.setValue(231)
 
         self.tfcSpinBox.valueChanged.connect(lambda: self.changeSliderValue(self.tfcSpinBox, self.tfcSlider))
         self.tfcSlider.valueChanged.connect(lambda: self.changeSpinnerValue(self.tfcSpinBox, self.tfcSlider))
@@ -74,12 +81,12 @@ class SpecWidget(QWidget):
         self.spacingSpinBox.setRange(0., 1.)
         self.spacingSpinBox.setSingleStep(.001)
         self.spacingSpinBox.setDecimals(3)
-        self.spacingSpinBox.setValue(.2)
+        self.spacingSpinBox.setValue(.156)
 
         self.spacingSlider = QSlider(Qt.Horizontal)
         self.spacingSlider.setMinimum(0)
         self.spacingSlider.setMaximum(1000)
-        self.spacingSlider.setValue(200)
+        self.spacingSlider.setValue(156)
 
         self.spacingSpinBox.valueChanged.connect(lambda: self.changeSliderValue(self.spacingSpinBox, self.spacingSlider))
         self.spacingSlider.valueChanged.connect(lambda: self.changeSpinnerValue(self.spacingSpinBox, self.spacingSlider))
@@ -104,15 +111,15 @@ class SpecWidget(QWidget):
         pinIncrementLayout = QVBoxLayout()
 
         self.pinIncrementSpinBox = QDoubleSpinBox()
-        self.pinIncrementSpinBox.setRange(0., 1.)
+        self.pinIncrementSpinBox.setRange(0., .2)
         self.pinIncrementSpinBox.setSingleStep(.001)
         self.pinIncrementSpinBox.setDecimals(3)
-        self.pinIncrementSpinBox.setValue(.2)
+        self.pinIncrementSpinBox.setValue(.015)
 
         self.pinIncrementSlider = QSlider(Qt.Horizontal)
         self.pinIncrementSlider.setMinimum(0)
-        self.pinIncrementSlider.setMaximum(1000)
-        self.pinIncrementSlider.setValue(200)
+        self.pinIncrementSlider.setMaximum(200)
+        self.pinIncrementSlider.setValue(15)
 
         self.pinIncrementSpinBox.valueChanged.connect(lambda: self.changeSliderValue(self.pinIncrementSpinBox, self.pinIncrementSlider))
         self.pinIncrementSlider.valueChanged.connect(lambda: self.changeSpinnerValue(self.pinIncrementSpinBox, self.pinIncrementSlider))
@@ -141,7 +148,7 @@ class SpecWidget(QWidget):
         self.pinNumberSpinBox = QSpinBox()
         self.pinNumberSpinBox.setRange(1,10)
         self.pinNumberSpinBox.setSingleStep(1)
-        self.pinNumberSpinBox.setValue(10)
+        self.pinNumberSpinBox.setValue(6)
         self.pinNumberSpinBox.valueChanged.connect(self.changePinNumber)
 
         hlayout.addWidget(pinNumLabel)
@@ -180,17 +187,50 @@ class SpecWidget(QWidget):
 
         x = [0]
         y = [0]
+        depths = []
         for i in range(pinNumber):
-            x.append(tfc + i*spacing - 0.05)
+            x.append(tfc + i*spacing - self.rootCut/2)
             y.append(-increment*self.pinSliders[i].value())
-            x.append(tfc + i*spacing + 0.05)
+            x.append(tfc + i*spacing + self.rootCut/2)
             y.append(-increment*self.pinSliders[i].value())
+            depths.append(increment*self.pinSliders[i].value())
 
-        #last point
-        lp = [x[-1],y[-1]]
+        #Bottom part
+        lp = [x[-1],-min(max(depths)+self.macs, 9*increment)]
         lp[0] = lp[0] + spacing
+        x.append(lp[0])
+        y.append(lp[1])
+        x.append(lp[0])
+        y.append(-10*increment)
+        x.append(0)
+        y.append(-10*increment)
+
+        x.append(0)
+        y.append(-self.keyHeight + .1)
+        x.append(tfc+2*spacing)
+        y.append(-self.keyHeight + .1)
+        x.append(tfc+2*spacing)
+        y.append(-self.keyHeight)
+        x.append(0)
+        y.append(-self.keyHeight)
+
+        #Handle
+        x.append(-1.5)
+        y.append(y[-1])
+        x.append(-1.5)
+        y.append(0.3)
+        x.append(-.5)
+        y.append(0.3)
+        x.append(-.5)
+        y.append(0.1)
+        x.append(0)
+        y.append(0.1)
+        x.append(0)
+        y.append(0)
+
 
         self.parent().pt.setData(x,y)
+        self.parent().pt2.setData([0,tfc + pinNumber*spacing + 0.05],[0,0])
 
     @pyqtSlot()
     def changePinHeight(self, pinNumber):
@@ -224,8 +264,9 @@ class MainWidget(QWidget):
         self.canvas = pg.GraphicsLayoutWidget()
         layout.addWidget(self.canvas,0,0,5,15)
         self.plot = self.canvas.addPlot()
-        self.plot.setRange(xRange=(-1,3), yRange=(-2,1))
+        self.plot.setRange(xRange=(-3,3), yRange=(-2,1))
         self.pt = self.plot.plot(pen='w')
+        self.pt2 = self.plot.plot(pen='r', style=Qt.DotLine)
 
         specs = SpecWidget()
         specs.setMaximumHeight(500)
