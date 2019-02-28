@@ -4,6 +4,11 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 import pyqtgraph as pg
+import pyqtgraph.opengl as gl
+
+import numpy as np
+
+from stl import mesh
 
 #TODO: Add dropdown menu for selecting key standards
 #TODO: (maybe) Add dropdown menu for selecting key blank
@@ -29,6 +34,7 @@ class SpecWidget(QWidget):
         self.increment = .015
         self.spacing = .156
         self.pinNumber = 6
+        self.keyMeshItem = None
 
         self.initSPinSliderLabel("tfc", "Distance to first cut (inches):",0,1,self.tfc)
         self.initSPinSliderLabel("spacing","Distance between cuts (inches):",0,1,self.spacing)
@@ -136,54 +142,6 @@ class SpecWidget(QWidget):
                 self.slidersLayout.addSpacing(74)
         self.vertical.addLayout(self.slidersLayout)
 
-    def drawKey(self):
-
-        x = [0]
-        y = [0]
-        depths = []
-        for i in range(self.pinNumber):
-            x.append(self.tfc + i*self.spacing - self.rootCut/2)
-            y.append(-self.increment*self.pinSliders[i].value())
-            x.append(self.tfc + i*self.spacing + self.rootCut/2)
-            y.append(-self.increment*self.pinSliders[i].value())
-            depths.append(self.increment*self.pinSliders[i].value())
-
-        #Bottom part
-        lp = [x[-1],-min(max(depths)+self.macs, 9*self.increment)]
-        lp[0] = lp[0] + self.spacing
-        x.append(lp[0])
-        y.append(lp[1])
-        x.append(lp[0])
-        y.append(-10*self.increment)
-        x.append(0)
-        y.append(-10*self.increment)
-
-        x.append(0)
-        y.append(-self.keyHeight + .1)
-        x.append(self.tfc+2*self.spacing)
-        y.append(-self.keyHeight + .1)
-        x.append(self.tfc+2*self.spacing)
-        y.append(-self.keyHeight)
-        x.append(0)
-        y.append(-self.keyHeight)
-
-        #Handle
-        x.append(-1.5)
-        y.append(y[-1])
-        x.append(-1.5)
-        y.append(0.3)
-        x.append(-.5)
-        y.append(0.3)
-        x.append(-.5)
-        y.append(0.1)
-        x.append(0)
-        y.append(0.1)
-        x.append(0)
-        y.append(0)
-
-
-        self.parent().pt.setData(x,y)
-        self.parent().pt2.setData([0,self.tfc + self.pinNumber*self.spacing + 0.05],[0,0])
 
     @pyqtSlot()
     def changePinHeight(self, pinNumber):
@@ -203,6 +161,101 @@ class SpecWidget(QWidget):
                 self.slidersLayout.addSpacing(74)
         self.drawKey()
 
+
+    def drawKey(self):
+        #2D Sketch
+        x = [0]
+        y = [0]
+        depths = []
+        for i in range(self.pinNumber):
+            x.append(self.tfc + i*self.spacing - self.rootCut/2)
+            y.append(-self.increment*self.pinSliders[i].value())
+            x.append(self.tfc + i*self.spacing + self.rootCut/2)
+            y.append(-self.increment*self.pinSliders[i].value())
+            depths.append(self.increment*self.pinSliders[i].value())
+
+        #Bottom part
+        lp = [x[-1],-min(max(depths)+self.macs, 9*self.increment)]
+        lp[0] = lp[0] + self.spacing
+        x.append(lp[0])
+        y.append(lp[1])
+        x.append(lp[0])
+        y.append(-10*self.increment)
+        #Need this to for mesh design
+        for i in range(self.pinNumber):
+            x.append(self.tfc + i*self.spacing - self.rootCut/2)
+            y.append(-10*self.increment)
+            x.append(self.tfc + i*self.spacing + self.rootCut/2)
+            y.append(-10*self.increment)
+
+        x.append(0)
+        y.append(-10*self.increment)
+
+        x.append(0)
+        y.append(-self.keyHeight + .1)
+        x.append(self.tfc+2*self.spacing)
+        y.append(-self.keyHeight + .1)
+        x.append(self.tfc+2*self.spacing)
+        y.append(-self.keyHeight)
+        x.append(0)
+        y.append(-self.keyHeight)
+
+        #Handle
+        x.append(0)
+        y.append(y[-1]-.1)
+        x.append(-.3)
+        y.append(y[-1])
+        x.append(-1.5)
+        y.append(y[-1])
+        x.append(-1.5)
+        y.append(0.7)
+        x.append(-.3)
+        y.append(0.7)
+        x.append(-.3)
+        y.append(0.1)
+        x.append(0)
+        y.append(0.1)
+        x.append(0)
+        y.append(0)
+
+
+        self.parent().pt.setData(x,y)
+        self.parent().pt2.setData([0,self.tfc + self.pinNumber*self.spacing + 0.05],[0,0])
+
+        #3D render
+        pointsBase = list(zip(x,y,[0]*len(x)))
+        pointsExtruded = list(zip(x,y,[0.1]*len(x)))
+
+        data = np.zeros((2*(len(x)-1),3,3))
+        for i in range(len(x)-1):
+            data[2*i,0] = pointsBase[i]
+            data[2*i,1] = pointsBase[i+1]
+            data[2*i,2] = pointsExtruded[i]
+            data[2*i + 1,0] = pointsBase[i+1]
+            data[2*i + 1,1] = pointsExtruded[i+1]
+            data[2*i + 1,2] = pointsExtruded[i]
+
+        data = np.insert(data,len(data),[pointsBase[-2],pointsBase[-8],pointsBase[-7]], axis=0)
+        data = np.insert(data,len(data),[pointsBase[-2],pointsBase[-3],pointsBase[-7]], axis=0)
+        data = np.insert(data,len(data),[pointsExtruded[-2],pointsExtruded[-8],pointsExtruded[-7]], axis=0)
+        data = np.insert(data,len(data),[pointsExtruded[-2],pointsExtruded[-3],pointsExtruded[-7]], axis=0)
+        data = np.insert(data,len(data),[pointsBase[-7],pointsBase[-6],pointsBase[-4]], axis=0)
+        data = np.insert(data,len(data),[pointsBase[-6],pointsBase[-5],pointsBase[-4]], axis=0)
+        data = np.insert(data,len(data),[pointsExtruded[-7],pointsExtruded[-6],pointsExtruded[-4]], axis=0)
+        data = np.insert(data,len(data),[pointsExtruded[-6],pointsExtruded[-5],pointsExtruded[-4]], axis=0)
+        data = np.insert(data,len(data),[pointsBase[-9],pointsBase[-10],pointsBase[-12]], axis=0)
+        data = np.insert(data,len(data),[pointsBase[-10],pointsBase[-11],pointsBase[-12]], axis=0)
+        data = np.insert(data,len(data),[pointsExtruded[-9],pointsExtruded[-10],pointsExtruded[-12]], axis=0)
+        data = np.insert(data,len(data),[pointsExtruded[-10],pointsExtruded[-11],pointsExtruded[-12]], axis=0)
+
+        #your_mesh = mesh.Mesh(data, remove_empty_areas=False)
+        #your_mesh.save('new_stl_file.stl')
+        keyMeshData = gl.MeshData(vertexes=data)
+        if self.keyMeshItem:
+            self.parent().view.removeItem(self.keyMeshItem)
+        self.keyMeshItem = gl.GLMeshItem(meshdata = keyMeshData)
+        self.parent().view.addItem(self.keyMeshItem)
+
 class MainWidget(QWidget):
 
     def __init__(self):
@@ -213,12 +266,29 @@ class MainWidget(QWidget):
         layout = QGridLayout()
         self.setLayout(layout)
 
+        tabs = QTabWidget()
+
         self.canvas = pg.GraphicsLayoutWidget()
-        layout.addWidget(self.canvas,0,0,5,15)
         self.plot = self.canvas.addPlot()
-        self.plot.setRange(xRange=(-3,3), yRange=(-2,1))
+        self.plot.setRange(xRange=(-3,2), yRange=(-1,1))
         self.pt = self.plot.plot(pen='w')
-        self.pt2 = self.plot.plot(pen='r', style=Qt.DotLine)
+        self.pt2 = self.plot.plot()
+        self.pt2.setPen(pg.mkPen('r', style=Qt.DotLine))
+
+        self.view = gl.GLViewWidget()
+        self.view.show()
+
+        ## create three grids, add each to the view
+        xgrid = gl.GLGridItem()
+        self.view.addItem(xgrid)
+
+        ## rotate x and y grids to face the correct direction
+        xgrid.rotate(90, 0, 1, 0)
+
+        tabs.addTab(self.canvas, "Sketch")
+        tabs.addTab(self.view, "3D View")
+
+        layout.addWidget(tabs,0,0,5,15)
 
         specs = SpecWidget()
         specs.setMaximumHeight(700)
@@ -237,6 +307,6 @@ class MainWindow(QMainWindow):
         mw = MainWidget()
         self.setCentralWidget(mw)
         self.setWindowTitle('Key Designer')
-        self.resize(1000,1200)
+        self.resize(1300,1200)
 
         self.show()
