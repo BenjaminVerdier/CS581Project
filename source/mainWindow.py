@@ -16,126 +16,74 @@ class SpecWidget(QWidget):
         self.setMaximumWidth(800)
         self.setLayout(self.vertical)
 
-        self.initTfc()
-        self.initSpacing()
-        self.initPinIncrement()
-        self.initBittingSpecs()
-
         #TODO: add sliders and spinners for that.
-        #TODO: create function to add slider and spinner with string tag instead of copy pasting the same function everytime
         self.keyHeight = .335
         self.keyLength = 2
         self.macs = 7
         self.rootCut = .031
+        self.tfc = .231
+        self.increment = .015
+        self.spacing = .156
+
+        self.initSPinSliderLabel("tfc", "Distance to first cut (inches):",0,1,self.tfc)
+        self.initSPinSliderLabel("spacing","Distance between cuts (inches):",0,1,self.spacing)
+        self.initSPinSliderLabel("increment","Pin height increment (inches):", 0, .2, self.increment)
+        self.initBittingSpecs()
 
         self.show()
 
     @pyqtSlot()
-    def changeSliderValue(self, spinner, slider):
+    def changeSliderValue(self, spinner, slider, spec):
         slider.setValue(int(spinner.value() * 1000))
+        if spec == "tfc":
+            self.tfc = spinner.value()
+        elif spec == "spacing":
+            self.spacing = spinner.value()
+        elif spec == "increment":
+            self.increment = spinner.value()
         self.drawKey()
 
     @pyqtSlot()
-    def changeSpinnerValue(self, spinner, slider):
+    def changeSpinnerValue(self, spinner, slider, spec):
         spinner.setValue(slider.value() / 1000)
+        if spec == "tfc":
+            self.tfc = slider.value() / 1000
+        elif spec == "spacing":
+            self.spacing = slider.value() / 1000
+        elif spec == "increment":
+            self.increment = slider.value() / 1000
         self.drawKey()
 
-    def initTfc(self):
-        # Distance to first cut
-        # slider + spinner
-        tfcLayout = QVBoxLayout()
+    def initSPinSliderLabel(self, spec, label, min, max, val):
+        layout = QVBoxLayout()
 
-        self.tfcSpinBox = QDoubleSpinBox()
-        self.tfcSpinBox.setRange(0., 1.)
-        self.tfcSpinBox.setSingleStep(.001)
-        self.tfcSpinBox.setDecimals(3)
-        self.tfcSpinBox.setValue(.231)
+        spinbox = QDoubleSpinBox()
+        spinbox.setRange(min, max)
+        spinbox.setSingleStep(.001)
+        spinbox.setDecimals(3)
+        spinbox.setValue(val)
 
-        self.tfcSlider = QSlider(Qt.Horizontal)
-        self.tfcSlider.setMinimum(0)
-        self.tfcSlider.setMaximum(1000)
-        self.tfcSlider.setValue(231)
+        slider = QSlider(Qt.Horizontal)
+        slider.setMinimum(min*1000)
+        slider.setMaximum(max*1000)
+        slider.setValue(val*1000)
 
-        self.tfcSpinBox.valueChanged.connect(lambda: self.changeSliderValue(self.tfcSpinBox, self.tfcSlider))
-        self.tfcSlider.valueChanged.connect(lambda: self.changeSpinnerValue(self.tfcSpinBox, self.tfcSlider))
+        spinbox.valueChanged.connect(lambda: self.changeSliderValue(spinbox, slider, spec))
+        slider.valueChanged.connect(lambda: self.changeSpinnerValue(spinbox, slider, spec))
         # Label
-        tfcLabel = QLabel("Distance to first cut (inches):")
+        label = QLabel(label)
 
-        tfcLayout.addWidget(self.tfcSpinBox)
-        tfcLayout.addWidget(self.tfcSlider)
+        layout.addWidget(spinbox)
+        layout.addWidget(slider)
 
         superLayout = QHBoxLayout()
 
-        superLayout.addWidget(tfcLabel)
+        superLayout.addWidget(label)
         superLayout.addSpacing(50)
-        superLayout.addLayout(tfcLayout)
+        superLayout.addLayout(layout)
 
         self.vertical.addLayout(superLayout)
 
-    def initSpacing(self):
-        # Distance to first cut
-        # slider + spinner
-        spacingLayout = QVBoxLayout()
-
-        self.spacingSpinBox = QDoubleSpinBox()
-        self.spacingSpinBox.setRange(0., 1.)
-        self.spacingSpinBox.setSingleStep(.001)
-        self.spacingSpinBox.setDecimals(3)
-        self.spacingSpinBox.setValue(.156)
-
-        self.spacingSlider = QSlider(Qt.Horizontal)
-        self.spacingSlider.setMinimum(0)
-        self.spacingSlider.setMaximum(1000)
-        self.spacingSlider.setValue(156)
-
-        self.spacingSpinBox.valueChanged.connect(lambda: self.changeSliderValue(self.spacingSpinBox, self.spacingSlider))
-        self.spacingSlider.valueChanged.connect(lambda: self.changeSpinnerValue(self.spacingSpinBox, self.spacingSlider))
-        # Label
-        spacingLabel = QLabel("Distance between cuts (inches):")
-
-        spacingLayout.addWidget(self.spacingSpinBox)
-        spacingLayout.addWidget(self.spacingSlider)
-
-        superLayout = QHBoxLayout()
-
-        superLayout.addWidget(spacingLabel)
-        superLayout.addSpacing(28)
-        superLayout.addLayout(spacingLayout)
-
-        self.vertical.addLayout(superLayout)
-
-    def initPinIncrement(self):
-        # Distance to first cut
-        # slider + spinner
-        pinIncrementWidget = QWidget()
-        pinIncrementLayout = QVBoxLayout()
-
-        self.pinIncrementSpinBox = QDoubleSpinBox()
-        self.pinIncrementSpinBox.setRange(0., .2)
-        self.pinIncrementSpinBox.setSingleStep(.001)
-        self.pinIncrementSpinBox.setDecimals(3)
-        self.pinIncrementSpinBox.setValue(.015)
-
-        self.pinIncrementSlider = QSlider(Qt.Horizontal)
-        self.pinIncrementSlider.setMinimum(0)
-        self.pinIncrementSlider.setMaximum(200)
-        self.pinIncrementSlider.setValue(15)
-
-        self.pinIncrementSpinBox.valueChanged.connect(lambda: self.changeSliderValue(self.pinIncrementSpinBox, self.pinIncrementSlider))
-        self.pinIncrementSlider.valueChanged.connect(lambda: self.changeSpinnerValue(self.pinIncrementSpinBox, self.pinIncrementSlider))
-        # Label
-        pinIncrementLabel = QLabel("Pin height increment (inches):")
-
-        pinIncrementLayout.addWidget(self.pinIncrementSpinBox)
-        pinIncrementLayout.addWidget(self.pinIncrementSlider)
-
-        superLayout = QHBoxLayout()
-
-        superLayout.addWidget(pinIncrementLabel)
-        superLayout.addSpacing(45)
-        superLayout.addLayout(pinIncrementLayout)
-
-        self.vertical.addLayout(superLayout)
 
     def initBittingSpecs(self):
         bittingWidget = QWidget()
@@ -180,36 +128,33 @@ class SpecWidget(QWidget):
         self.vertical.addWidget(bittingWidget)
 
     def drawKey(self):
-        tfc = self.tfcSpinBox.value()
-        increment = self.pinIncrementSpinBox.value()
-        spacing = self.spacingSpinBox.value()
         pinNumber = self.pinNumberSpinBox.value()
 
         x = [0]
         y = [0]
         depths = []
         for i in range(pinNumber):
-            x.append(tfc + i*spacing - self.rootCut/2)
-            y.append(-increment*self.pinSliders[i].value())
-            x.append(tfc + i*spacing + self.rootCut/2)
-            y.append(-increment*self.pinSliders[i].value())
-            depths.append(increment*self.pinSliders[i].value())
+            x.append(self.tfc + i*self.spacing - self.rootCut/2)
+            y.append(-self.increment*self.pinSliders[i].value())
+            x.append(self.tfc + i*self.spacing + self.rootCut/2)
+            y.append(-self.increment*self.pinSliders[i].value())
+            depths.append(self.increment*self.pinSliders[i].value())
 
         #Bottom part
-        lp = [x[-1],-min(max(depths)+self.macs, 9*increment)]
-        lp[0] = lp[0] + spacing
+        lp = [x[-1],-min(max(depths)+self.macs, 9*self.increment)]
+        lp[0] = lp[0] + self.spacing
         x.append(lp[0])
         y.append(lp[1])
         x.append(lp[0])
-        y.append(-10*increment)
+        y.append(-10*self.increment)
         x.append(0)
-        y.append(-10*increment)
+        y.append(-10*self.increment)
 
         x.append(0)
         y.append(-self.keyHeight + .1)
-        x.append(tfc+2*spacing)
+        x.append(self.tfc+2*self.spacing)
         y.append(-self.keyHeight + .1)
-        x.append(tfc+2*spacing)
+        x.append(self.tfc+2*self.spacing)
         y.append(-self.keyHeight)
         x.append(0)
         y.append(-self.keyHeight)
@@ -230,7 +175,7 @@ class SpecWidget(QWidget):
 
 
         self.parent().pt.setData(x,y)
-        self.parent().pt2.setData([0,tfc + pinNumber*spacing + 0.05],[0,0])
+        self.parent().pt2.setData([0,self.tfc + pinNumber*self.spacing + 0.05],[0,0])
 
     @pyqtSlot()
     def changePinHeight(self, pinNumber):
