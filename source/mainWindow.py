@@ -5,6 +5,9 @@ from PyQt4.QtGui import *
 
 import pyqtgraph as pg
 
+#TODO: Add dropdown menu for selecting key standards
+#TODO: (maybe) Add dropdown menu for selecting key blank
+
 class SpecWidget(QWidget):
 
     def __init__(self):
@@ -15,6 +18,7 @@ class SpecWidget(QWidget):
         self.vertical = QVBoxLayout()
         self.setMaximumWidth(800)
         self.setLayout(self.vertical)
+
 
         #Values used are for Schlage Classic, except key length
         self.keyHeight = .335
@@ -130,7 +134,6 @@ class SpecWidget(QWidget):
             else:
                 self.pinSliders[i].hide()
                 self.slidersLayout.addSpacing(74)
-
         self.vertical.addLayout(self.slidersLayout)
 
     def drawKey(self):
