@@ -28,48 +28,68 @@ class SpecWidget(QWidget):
         self.initSPinSliderLabel("tfc", "Distance to first cut (inches):",0,1,self.tfc)
         self.initSPinSliderLabel("spacing","Distance between cuts (inches):",0,1,self.spacing)
         self.initSPinSliderLabel("increment","Pin height increment (inches):", 0, .2, self.increment)
+        self.initSPinSliderLabel("rootCut", "Width of the cuts (inches):",0, 1, self.rootCut)
+        self.initSPinSliderLabel("macs", "MACS:",0, 10, self.macs, 1)
+        self.initSPinSliderLabel("keyHeight", "Height of the key (inches):",0, 1, self.keyHeight)
+        #self.initSPinSliderLabel("keyLength", "Length of the key (inches):",0, 2, self.keyLength)
         self.initBittingSpecs()
 
         self.show()
 
     @pyqtSlot()
-    def changeSliderValue(self, spinner, slider, spec):
-        slider.setValue(int(spinner.value() * 1000))
+    def changeSliderValue(self, spinner, slider, spec, step):
+        slider.setValue(int(spinner.value() / step))
         if spec == "tfc":
             self.tfc = spinner.value()
         elif spec == "spacing":
             self.spacing = spinner.value()
         elif spec == "increment":
             self.increment = spinner.value()
+        elif spec == "rootCut":
+            self.rootCut = spinner.value()
+        elif spec == "macs":
+            self.macs = spinner.value()
+        elif spec == "keyHeight":
+            self.keyHeight = spinner.value()
+        elif spec == "keyLength":
+            self.keyLength = spinner.value()
         self.drawKey()
 
     @pyqtSlot()
-    def changeSpinnerValue(self, spinner, slider, spec):
-        spinner.setValue(slider.value() / 1000)
+    def changeSpinnerValue(self, spinner, slider, spec, step):
+        spinner.setValue(slider.value() * step)
         if spec == "tfc":
-            self.tfc = slider.value() / 1000
+            self.tfc = slider.value() * step
         elif spec == "spacing":
-            self.spacing = slider.value() / 1000
+            self.spacing = slider.value() * step
         elif spec == "increment":
-            self.increment = slider.value() / 1000
+            self.increment = slider.value() * step
+        elif spec == "rootCut":
+            self.rootCut = slider.value() * step
+        elif spec == "macs":
+            self.macs = slider.value() * step
+        elif spec == "keyHeight":
+            self.keyHeight = slider.value() * step
+        elif spec == "keyLength":
+            self.keyLength = slider.value() * step
         self.drawKey()
 
-    def initSPinSliderLabel(self, spec, label, min, max, val):
+    def initSPinSliderLabel(self, spec, label, min, max, val, step = 0.001):
         layout = QVBoxLayout()
 
         spinbox = QDoubleSpinBox()
         spinbox.setRange(min, max)
-        spinbox.setSingleStep(.001)
+        spinbox.setSingleStep(step)
         spinbox.setDecimals(3)
         spinbox.setValue(val)
 
         slider = QSlider(Qt.Horizontal)
-        slider.setMinimum(min*1000)
-        slider.setMaximum(max*1000)
-        slider.setValue(val*1000)
+        slider.setMinimum(min/step)
+        slider.setMaximum(max/step)
+        slider.setValue(val/step)
 
-        spinbox.valueChanged.connect(lambda: self.changeSliderValue(spinbox, slider, spec))
-        slider.valueChanged.connect(lambda: self.changeSpinnerValue(spinbox, slider, spec))
+        spinbox.valueChanged.connect(lambda: self.changeSliderValue(spinbox, slider, spec, step))
+        slider.valueChanged.connect(lambda: self.changeSpinnerValue(spinbox, slider, spec, step))
         # Label
         label = QLabel(label)
 
@@ -214,7 +234,7 @@ class MainWidget(QWidget):
         self.pt2 = self.plot.plot(pen='r', style=Qt.DotLine)
 
         specs = SpecWidget()
-        specs.setMaximumHeight(500)
+        specs.setMaximumHeight(700)
         layout.addWidget(specs,15,0)
         specs.drawKey()
 
@@ -230,6 +250,6 @@ class MainWindow(QMainWindow):
         mw = MainWidget()
         self.setCentralWidget(mw)
         self.setWindowTitle('Key Designer')
-        self.resize(800,1200)
+        self.resize(1000,1200)
 
         self.show()
