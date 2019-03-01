@@ -104,4 +104,4 @@ venv.bak/
 .mypy_cache/
 
 # stl file generation
-.stl
+*.stl
