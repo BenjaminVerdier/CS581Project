@@ -1,0 +1,12 @@
+{
+  "Schlage Classic":
+  {
+    "tfc":0.231,
+    "spacing":0.156,
+    "increment":0.015,
+    "rootCut":0.031,
+    "macs":7,
+    "keyHeight":0.335,
+    "pinNumber":6
+  }
+}
