@@ -10,6 +10,8 @@ import pyqtgraph.opengl as gl
 
 import numpy as np
 
+import json
+
 #TODO: Add dropdown menu for selecting key standards
 #TODO: (maybe) Add dropdown menu for selecting key blank
 
@@ -28,44 +30,72 @@ class SpecWidget(QWidget):
         self.setLayout(self.horizontal)
 
         #Values used are for Schlage Classic, except key length
-        self.keyHeight = .335
-        self.keyLength = 2
-        self.macs = 7
-        self.rootCut = .031
-        self.tfc = .231
-        self.increment = .015
-        self.spacing = .156
-        self.pinNumber = 6
+        self.specs = {
+        "keyHeight" : .335,
+        "keyLength" : 2,
+        "macs" : 7,
+        "rootCut" : .031,
+        "tfc" : .231,
+        "increment" : .015,
+        "spacing" : .156,
+        "pinNumber" : 6
+        }
+
+        self.spinners = {}
+        self.sliders = {}
         self.depths = [0]*10
         self.keyMeshItem = None
         self.data = None
 
         #Left side of spec widget
 
-        self.initSPinSliderLabel("tfc", "Distance to first cut (inches):",0,1,self.tfc)
-        self.initSPinSliderLabel("spacing","Distance between cuts (inches):",0,1,self.spacing)
-        self.initSPinSliderLabel("increment","Pin height increment (inches):", 0, .2, self.increment)
-        self.initSPinSliderLabel("rootCut", "Width of the cuts (inches):",0, 1, self.rootCut)
-        self.initSPinSliderLabel("macs", "MACS:",0, 10, self.macs, 1)
-        self.initSPinSliderLabel("keyHeight", "Height of the key (inches):",0, 1, self.keyHeight)
-        #self.initSPinSliderLabel("keyLength", "Length of the key (inches):",0, 2, self.keyLength)
-        self.initSPinSliderLabel("pinNumber", "Number of pins:", 1, 10, self.pinNumber, 1)
+        self.initSPinSliderLabel("tfc", "Distance to first cut (inches):",0,1,self.specs["tfc"])
+        self.initSPinSliderLabel("spacing","Distance between cuts (inches):",0,1,self.specs["spacing"])
+        self.initSPinSliderLabel("increment","Pin height increment (inches):", 0, .2,self.specs["increment"])
+        self.initSPinSliderLabel("rootCut", "Width of the cuts (inches):",0, 1,self.specs["rootCut"])
+        self.initSPinSliderLabel("macs", "MACS:",0, 10,self.specs["macs"], 1)
+        self.initSPinSliderLabel("keyHeight", "Height of the key (inches):",0, 1,self.specs["keyHeight"])
+        #self.initSPinSliderLabel("keyLength", "Length of the key (inches):",0, 2,self.specs["keyLength"])
+        self.initSPinSliderLabel("pinNumber", "Number of pins:", 1, 10,self.specs["pinNumber"], 1)
+
         self.initBittingSliders()
+
+        #Spacing between left and right side
+        self.horizontal.addSpacing(100)
 
         #Right side of spec widget
         rightSideLayout = QVBoxLayout()
         self.horizontal.addLayout(rightSideLayout)
+
+        standardLabel = QLabel("Key Bitting Standard:")
+        rightSideLayout.addWidget(standardLabel)
+
+        with open("../resources/bittings.json", "r") as read_file:
+            self.bittings = json.load(read_file)
+        self.standardCombo = QComboBox(self)
+        rightSideLayout.addWidget(self.standardCombo)
+        for bitting in self.bittings:
+            self.standardCombo.addItem(bitting)
+        self.standardCombo.activated.connect(self.bitStandardSelect)
+
         rightSideLayout.addStretch()
+
         saveBtn = QPushButton("Save .STL")
         rightSideLayout.addWidget(saveBtn)
-
         saveBtn.clicked.connect(self.saveSTL)
 
         self.show()
 
     @pyqtSlot()
+    def bitStandardSelect(self):
+        std = self.standardCombo.currentText()
+        for property in self.bittings[std]:
+            self.specs[property] = self.bittings[std][property]
+            self.spinners[property].setValue(self.specs[property])
+
+    @pyqtSlot()
     def saveSTL(self):
-        filename = QFileDialog.getSaveFileName(self, 'Save File', '../key.stl', '*.stl')
+        filename = QFileDialog.getSaveFileName(self, 'Save File', '../resources/key.stl', '*.stl')
         if filename == "":
             pass
         else:
@@ -74,65 +104,42 @@ class SpecWidget(QWidget):
     @pyqtSlot()
     def changeSliderValue(self, spinner, slider, spec, step):
         slider.setValue(int(spinner.value() / step))
-        if spec == "tfc":
-            self.tfc = spinner.value()
-        elif spec == "spacing":
-            self.spacing = spinner.value()
-        elif spec == "increment":
-            self.increment = spinner.value()
-        elif spec == "rootCut":
-            self.rootCut = spinner.value()
-        elif spec == "macs":
-            self.macs = int(spinner.value())
-        elif spec == "keyHeight":
-            self.keyHeight = spinner.value()
-        elif spec == "keyLength":
-            self.keyLength = spinner.value()
-        elif spec == "pinNumber":
-            self.pinNumber = int(spinner.value())
+        self.specs[spec] = spinner.value()
+        if spec == "pinNumber":
+            self.specs[spec] = int(spinner.value())
             self.changePinNumber()
         self.drawKey()
 
     @pyqtSlot()
     def changeSpinnerValue(self, spinner, slider, spec, step):
         spinner.setValue(slider.value() * step)
-        if spec == "tfc":
-            self.tfc = slider.value() * step
-        elif spec == "spacing":
-            self.spacing = slider.value() * step
-        elif spec == "increment":
-            self.increment = slider.value() * step
-        elif spec == "rootCut":
-            self.rootCut = slider.value() * step
-        elif spec == "macs":
-            self.macs = int(slider.value() * step)
-        elif spec == "keyHeight":
-            self.keyHeight = slider.value() * step
-        elif spec == "keyLength":
-            self.keyLength = slider.value() * step
-        elif spec == "pinNumber":
-            self.pinNumber = int(slider.value() * step)
+        self.specs[spec] = slider.value() * step
+        if spec == "pinNumber":
+            self.specs[spec] = int(slider.value() * step)
             self.changePinNumber()
         self.drawKey()
 
-    def initSPinSliderLabel(self, spec, label, min, max, val, step = 0.001):
+    def initSPinSliderLabel(self, spec, label, minVal, maxVal, val, step = 0.001):
         layout = QVBoxLayout()
 
         spinbox = QDoubleSpinBox()
-        spinbox.setRange(min, max)
+        spinbox.setRange(minVal, maxVal)
         spinbox.setSingleStep(step)
-        spinbox.setDecimals(3)
+        spinbox.setDecimals(int(np.log10(1/step)))
         spinbox.setValue(val)
 
         slider = QSlider(Qt.Horizontal)
-        slider.setMinimum(min/step)
-        slider.setMaximum(max/step)
+        slider.setMinimum(minVal/step)
+        slider.setMaximum(maxVal/step)
         slider.setValue(val/step)
 
         spinbox.valueChanged.connect(lambda: self.changeSliderValue(spinbox, slider, spec, step))
         slider.valueChanged.connect(lambda: self.changeSpinnerValue(spinbox, slider, spec, step))
         # Label
         label = QLabel(label)
+
+        self.spinners[spec] = spinbox
+        self.sliders[spec] = slider
 
         layout.addWidget(spinbox)
         layout.addWidget(slider)
@@ -158,7 +165,7 @@ class SpecWidget(QWidget):
             #TODO: add label for pin position underneath the sliders
             pin.valueChanged.connect(self.changePinHeight)
             self.pinSliders.append(pin)
-            if i < self.pinNumber:
+            if i < self.specs["pinNumber"]:
                 self.slidersLayout.addWidget(pin)
             else:
                 self.pinSliders[i].hide()
@@ -168,7 +175,7 @@ class SpecWidget(QWidget):
 
     @pyqtSlot()
     def changePinHeight(self):
-        for i in range(self.pinNumber):
+        for i in range(self.specs["pinNumber"]):
             self.depths[i] = self.pinSliders[i].value()
         self.drawKey()
 
@@ -178,7 +185,7 @@ class SpecWidget(QWidget):
             item = self.slidersLayout.takeAt(0)
             self.slidersLayout.removeItem(item)
         for i in range(10):
-            if i < self.pinNumber:
+            if i < self.specs["pinNumber"]:
                 self.pinSliders[i].show()
                 self.slidersLayout.addWidget(self.pinSliders[i])
             else:
@@ -189,13 +196,13 @@ class SpecWidget(QWidget):
 
     def drawKey(self):
         #2D Sketch
-        x,y = computeSketch(self.tfc, self.spacing, self.increment, self.rootCut, self.macs, self.keyHeight, self.keyLength, self.pinNumber, self.depths)
+        x,y = computeSketch(self.specs["tfc"], self.specs["spacing"], self.specs["increment"], self.specs["rootCut"], self.specs["macs"], self.specs["keyHeight"], self.specs["keyLength"], self.specs["pinNumber"], self.depths)
 
         self.parent().pt.setData(x,y)
-        self.parent().pt2.setData([0,self.tfc + self.pinNumber*self.spacing + 0.05],[0,0])
+        self.parent().pt2.setData([0,self.specs["tfc"] + self.specs["pinNumber"]*self.specs["spacing"] + 0.05],[0,0])
 
         #3D render
-        self.data = computeMeshData(x, y, self.pinNumber, self.depths)
+        self.data = computeMeshData(x, y, self.specs["pinNumber"], self.depths)
 
         keyMeshData = gl.MeshData(vertexes=self.data)
         if self.keyMeshItem:
@@ -229,6 +236,7 @@ class MainWidget(QWidget):
 
         #Create gird
         zgrid = gl.GLGridItem()
+        zgrid.scale(0.1, 0.1, 0.1)
         self.view.addItem(zgrid)
 
         tabs.addTab(self.canvas, "Sketch")
