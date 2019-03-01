@@ -1,5 +1,4 @@
 import numpy as np
-
 from stl import mesh
 
 def computeSketch(tfc, spacing, increment, rootCut, macs, keyHeight, keyLength, pinNumber, depths):
@@ -121,6 +120,9 @@ def computeMeshData(x, y, pinNumber, depths, extrudedHeight = 0.1):
     return data
 
 def generateSTL(data, name="key.stl"):
+    if data is None:
+        print("No Mesh, can't save STL")
+        return
     key = mesh.Mesh(np.zeros(data.shape[0], dtype=mesh.Mesh.dtype))
     key.vectors = data
     key.save(name)
