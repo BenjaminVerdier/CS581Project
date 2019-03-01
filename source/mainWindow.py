@@ -20,10 +20,12 @@ class SpecWidget(QWidget):
         self.initUI()
 
     def initUI(self):
+        #Left side is sliders and stuff, right side is dropdown menu and button to generate stl
+        self.horizontal = QHBoxLayout()
         self.vertical = QVBoxLayout()
+        self.horizontal.addLayout(self.vertical)
         self.setMaximumWidth(800)
-        self.setLayout(self.vertical)
-
+        self.setLayout(self.horizontal)
 
         #Values used are for Schlage Classic, except key length
         self.keyHeight = .335
@@ -36,6 +38,9 @@ class SpecWidget(QWidget):
         self.pinNumber = 6
         self.depths = [0]*10
         self.keyMeshItem = None
+        self.data = None
+
+        #Left side of spec widget
 
         self.initSPinSliderLabel("tfc", "Distance to first cut (inches):",0,1,self.tfc)
         self.initSPinSliderLabel("spacing","Distance between cuts (inches):",0,1,self.spacing)
@@ -47,7 +52,24 @@ class SpecWidget(QWidget):
         self.initSPinSliderLabel("pinNumber", "Number of pins:", 1, 10, self.pinNumber, 1)
         self.initBittingSliders()
 
+        #Right side of spec widget
+        rightSideLayout = QVBoxLayout()
+        self.horizontal.addLayout(rightSideLayout)
+        rightSideLayout.addStretch()
+        saveBtn = QPushButton("Save .STL")
+        rightSideLayout.addWidget(saveBtn)
+
+        saveBtn.clicked.connect(self.saveSTL)
+
         self.show()
+
+    @pyqtSlot()
+    def saveSTL(self):
+        filename = QFileDialog.getSaveFileName(self, 'Save File', '../key.stl', '*.stl')
+        if filename == "":
+            pass
+        else:
+            generateSTL(self.data, filename)
 
     @pyqtSlot()
     def changeSliderValue(self, spinner, slider, spec, step):
@@ -173,9 +195,9 @@ class SpecWidget(QWidget):
         self.parent().pt2.setData([0,self.tfc + self.pinNumber*self.spacing + 0.05],[0,0])
 
         #3D render
-        data = computeMeshData(x, y, self.pinNumber, self.depths)
+        self.data = computeMeshData(x, y, self.pinNumber, self.depths)
 
-        keyMeshData = gl.MeshData(vertexes=data)
+        keyMeshData = gl.MeshData(vertexes=self.data)
         if self.keyMeshItem:
             self.parent().view.removeItem(self.keyMeshItem)
         self.keyMeshItem = gl.GLMeshItem(meshdata = keyMeshData)
@@ -205,9 +227,9 @@ class MainWidget(QWidget):
         self.view = gl.GLViewWidget()
         self.view.show()
 
-        ## create three grids, add each to the view
+        #Create gird
         zgrid = gl.GLGridItem()
-        #self.view.addItem(zgrid)
+        self.view.addItem(zgrid)
 
         tabs.addTab(self.canvas, "Sketch")
         tabs.addTab(self.view, "3D View")

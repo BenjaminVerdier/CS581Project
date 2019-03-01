@@ -35,4 +35,3 @@ Next steps in the development:
 
 - Add dropdown menu to choose key bitting specs standards and blanks
 - Add csv with a number of key bitting specs standards
-- Add .stl file generation
