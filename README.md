@@ -16,8 +16,10 @@ The list of required python libraries will be expanded.
 Requirements:
 
 - Python 3.7
-- PyQt4 4.11.4
-- PyQtGraph 0.10.0
+- numpy 1.15.1
+- numpy-stl 2.10.0
+- pyqt4 4.11.4
+- pyqtgraph 0.10.0
 
 NB: The specified versions are what was used during development, no other versions have been tested but some may work nonetheless.
 
@@ -25,7 +27,11 @@ NB: The specified versions are what was used during development, no other versio
 
 ## Usage
 
-TODO (There's literally 0 line of code right now, so yeah, this will come later on).
+Launch main.py.  
+Choose the bitting standard in the dropdown menu or manually set the specs for the key you want to design.
+Choose the height of each pin.
+Inspect the sketch/model of the key.
+Click "Save .STL" to save the 3D model in .stl format.
 
 ---
 
@@ -33,5 +39,5 @@ TODO (There's literally 0 line of code right now, so yeah, this will come later 
 
 Next steps in the development:
 
-- Add dropdown menu to choose key bitting specs standards and blanks
-- Add csv with a number of key bitting specs standards
+- Add more standards to bittings.json
+- Add key blanks specs (length and height)
