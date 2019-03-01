@@ -228,23 +228,23 @@ class SpecWidget(QWidget):
         data = np.zeros((2*(len(x)-1),3,3))
         for i in range(len(x)-1):
             data[2*i,0] = pointsBase[i]
-            data[2*i,1] = pointsBase[i+1]
-            data[2*i,2] = pointsExtruded[i]
+            data[2*i,2] = pointsBase[i+1]
+            data[2*i,1] = pointsExtruded[i]
             data[2*i + 1,0] = pointsBase[i+1]
-            data[2*i + 1,1] = pointsExtruded[i+1]
-            data[2*i + 1,2] = pointsExtruded[i]
+            data[2*i + 1,2] = pointsExtruded[i+1]
+            data[2*i + 1,1] = pointsExtruded[i]
 
         #handle
         data = np.insert(data,len(data),[pointsBase[-2],pointsBase[-8],pointsBase[-7]], axis=0)
-        data = np.insert(data,len(data),[pointsBase[-2],pointsBase[-3],pointsBase[-7]], axis=0)
-        data = np.insert(data,len(data),[pointsExtruded[-2],pointsExtruded[-8],pointsExtruded[-7]], axis=0)
+        data = np.insert(data,len(data),[pointsBase[-2],pointsBase[-7],pointsBase[-3]], axis=0)
+        data = np.insert(data,len(data),[pointsExtruded[-2],pointsExtruded[-7],pointsExtruded[-8]], axis=0)
         data = np.insert(data,len(data),[pointsExtruded[-2],pointsExtruded[-3],pointsExtruded[-7]], axis=0)
         data = np.insert(data,len(data),[pointsBase[-7],pointsBase[-6],pointsBase[-4]], axis=0)
         data = np.insert(data,len(data),[pointsBase[-6],pointsBase[-5],pointsBase[-4]], axis=0)
-        data = np.insert(data,len(data),[pointsExtruded[-7],pointsExtruded[-6],pointsExtruded[-4]], axis=0)
-        data = np.insert(data,len(data),[pointsExtruded[-6],pointsExtruded[-5],pointsExtruded[-4]], axis=0)
-        data = np.insert(data,len(data),[pointsBase[-9],pointsBase[-10],pointsBase[-12]], axis=0)
-        data = np.insert(data,len(data),[pointsBase[-10],pointsBase[-11],pointsBase[-12]], axis=0)
+        data = np.insert(data,len(data),[pointsExtruded[-7],pointsExtruded[-4],pointsExtruded[-6]], axis=0)
+        data = np.insert(data,len(data),[pointsExtruded[-6],pointsExtruded[-4],pointsExtruded[-5]], axis=0)
+        data = np.insert(data,len(data),[pointsBase[-9],pointsBase[-12],pointsBase[-10]], axis=0)
+        data = np.insert(data,len(data),[pointsBase[-10],pointsBase[-12],pointsBase[-11]], axis=0)
         data = np.insert(data,len(data),[pointsExtruded[-9],pointsExtruded[-10],pointsExtruded[-12]], axis=0)
         data = np.insert(data,len(data),[pointsExtruded[-10],pointsExtruded[-11],pointsExtruded[-12]], axis=0)
 
@@ -253,39 +253,40 @@ class SpecWidget(QWidget):
         for i in range(self.pinNumber):
             if prevDepth == depths[i]:
                 data = np.insert(data,len(data),[pointsBase[2*i],pointsBase[2*i+2],pointsBase[2+4*self.pinNumber-2*i]], axis=0)
-                data = np.insert(data,len(data),[pointsBase[2*i+2],pointsBase[2+4*self.pinNumber-2*i],pointsBase[4*self.pinNumber-2*i]], axis=0)
-                data = np.insert(data,len(data),[pointsExtruded[2*i],pointsExtruded[2*i+2],pointsExtruded[2+4*self.pinNumber-2*i]], axis=0)
+                data = np.insert(data,len(data),[pointsBase[2*i+2],pointsBase[4*self.pinNumber-2*i],pointsBase[2+4*self.pinNumber-2*i]], axis=0)
+                data = np.insert(data,len(data),[pointsExtruded[2*i+2],pointsExtruded[2*i],pointsExtruded[2+4*self.pinNumber-2*i]], axis=0)
                 data = np.insert(data,len(data),[pointsExtruded[2*i+2],pointsExtruded[2+4*self.pinNumber-2*i],pointsExtruded[4*self.pinNumber-2*i]], axis=0)
             else:
                 data = np.insert(data,len(data),[pointsBase[2*i+1],pointsBase[2*i+2],pointsBase[4*self.pinNumber-2*i]], axis=0)
-                data = np.insert(data,len(data),[pointsBase[2*i+1],pointsBase[1+4*self.pinNumber-2*i],pointsBase[4*self.pinNumber-2*i]], axis=0)
-                data = np.insert(data,len(data),[pointsExtruded[2*i+1],pointsExtruded[2*i+2],pointsExtruded[4*self.pinNumber-2*i]], axis=0)
+                data = np.insert(data,len(data),[pointsBase[2*i+1],pointsBase[4*self.pinNumber-2*i],pointsBase[1+4*self.pinNumber-2*i]], axis=0)
+                data = np.insert(data,len(data),[pointsExtruded[2*i+2],pointsExtruded[2*i+1],pointsExtruded[4*self.pinNumber-2*i]], axis=0)
                 data = np.insert(data,len(data),[pointsExtruded[2*i+1],pointsExtruded[1+4*self.pinNumber-2*i],pointsExtruded[4*self.pinNumber-2*i]], axis=0)
                 if prevDepth < depths[i]:
                     midPointBase = [pointsBase[2*i][0],pointsBase[2*i+1][1],0]
                     midPointExtruded = [pointsBase[2*i][0],pointsBase[2*i+1][1],extrudedHeight]
-                    data = np.insert(data,len(data),[pointsBase[2*i],midPointBase,pointsBase[2*i+1]], axis=0)
+                    data = np.insert(data,len(data),[pointsBase[2*i],pointsBase[2*i+1],midPointBase], axis=0)
                     data = np.insert(data,len(data),[pointsBase[2+4*self.pinNumber-2*i],midPointBase,pointsBase[2*i+1]], axis=0)
-                    data = np.insert(data,len(data),[pointsBase[2+4*self.pinNumber-2*i],pointsBase[1+4*self.pinNumber-2*i],pointsBase[2*i+1]], axis=0)
+                    data = np.insert(data,len(data),[pointsBase[1+4*self.pinNumber-2*i],pointsBase[2+4*self.pinNumber-2*i],pointsBase[2*i+1]], axis=0)
                     data = np.insert(data,len(data),[pointsExtruded[2*i],midPointExtruded,pointsExtruded[2*i+1]], axis=0)
-                    data = np.insert(data,len(data),[pointsExtruded[2+4*self.pinNumber-2*i],midPointExtruded,pointsExtruded[2*i+1]], axis=0)
+                    data = np.insert(data,len(data),[pointsExtruded[2+4*self.pinNumber-2*i],pointsExtruded[2*i+1],midPointExtruded], axis=0)
                     data = np.insert(data,len(data),[pointsExtruded[2+4*self.pinNumber-2*i],pointsExtruded[1+4*self.pinNumber-2*i],pointsExtruded[2*i+1]], axis=0)
 
                 else:
                     midPointBase = [pointsBase[2*i+1][0],pointsBase[2*i][1],0]
                     midPointExtruded = [pointsBase[2*i+1][0],pointsBase[2*i][1],extrudedHeight]
-                    data = np.insert(data,len(data),[pointsBase[2*i],midPointBase,pointsBase[2*i+1]], axis=0)
-                    data = np.insert(data,len(data),[pointsBase[2+4*self.pinNumber-2*i],midPointBase,pointsBase[2*i]], axis=0)
-                    data = np.insert(data,len(data),[pointsBase[2+4*self.pinNumber-2*i],pointsBase[1+4*self.pinNumber-2*i],midPointBase], axis=0)
+                    data = np.insert(data,len(data),[pointsBase[2*i],pointsBase[2*i+1],midPointBase], axis=0)
+                    data = np.insert(data,len(data),[pointsBase[2+4*self.pinNumber-2*i],pointsBase[2*i],midPointBase], axis=0)
+                    data = np.insert(data,len(data),[pointsBase[2+4*self.pinNumber-2*i],midPointBase,pointsBase[1+4*self.pinNumber-2*i]], axis=0)
                     data = np.insert(data,len(data),[pointsExtruded[2*i],midPointExtruded,pointsExtruded[2*i+1]], axis=0)
                     data = np.insert(data,len(data),[pointsExtruded[2+4*self.pinNumber-2*i],midPointExtruded,pointsExtruded[2*i]], axis=0)
                     data = np.insert(data,len(data),[pointsExtruded[2+4*self.pinNumber-2*i],pointsExtruded[1+4*self.pinNumber-2*i],midPointExtruded], axis=0)
             prevDepth = depths[i]
         data = np.insert(data,len(data),[pointsBase[2*self.pinNumber],pointsBase[2*self.pinNumber+1],pointsBase[2*self.pinNumber+2]], axis=0)
-        data = np.insert(data,len(data),[pointsExtruded[2*self.pinNumber],pointsExtruded[2*self.pinNumber+1],pointsExtruded[2*self.pinNumber+2]], axis=0)
+        data = np.insert(data,len(data),[pointsExtruded[2*self.pinNumber],pointsExtruded[2*self.pinNumber+2],pointsExtruded[2*self.pinNumber+1]], axis=0)
 
-        #your_mesh = mesh.Mesh(data, remove_empty_areas=False)
-        #your_mesh.save('new_stl_file.stl')
+        key = mesh.Mesh(np.zeros(data.shape[0], dtype=mesh.Mesh.dtype))
+        key.vectors = data
+        key.save('key.stl')
         keyMeshData = gl.MeshData(vertexes=data)
         if self.keyMeshItem:
             self.parent().view.removeItem(self.keyMeshItem)
