@@ -175,17 +175,13 @@ class SpecWidget(QWidget):
             depths.append(self.increment*self.pinSliders[i].value())
 
         #Bottom part
-        lp = [x[-1],-min(max(depths)+self.macs, 9*self.increment)]
-        lp[0] = lp[0] + self.spacing
-        x.append(lp[0])
-        y.append(lp[1])
-        x.append(lp[0])
+        x.append(x[-1] + self.spacing)
         y.append(-10*self.increment)
         #Need this to for mesh design
         for i in range(self.pinNumber):
-            x.append(self.tfc + i*self.spacing - self.rootCut/2)
+            x.append(self.tfc + (self.pinNumber-1-i)*self.spacing + self.rootCut/2)
             y.append(-10*self.increment)
-            x.append(self.tfc + i*self.spacing + self.rootCut/2)
+            x.append(self.tfc + (self.pinNumber-1-i)*self.spacing - self.rootCut/2)
             y.append(-10*self.increment)
 
         x.append(0)
@@ -223,9 +219,12 @@ class SpecWidget(QWidget):
         self.parent().pt2.setData([0,self.tfc + self.pinNumber*self.spacing + 0.05],[0,0])
 
         #3D render
+        extrudedHeight = 0.1
+        #This is super messy, really. Might want to change this.
         pointsBase = list(zip(x,y,[0]*len(x)))
-        pointsExtruded = list(zip(x,y,[0.1]*len(x)))
+        pointsExtruded = list(zip(x,y,[extrudedHeight]*len(x)))
 
+        #sides
         data = np.zeros((2*(len(x)-1),3,3))
         for i in range(len(x)-1):
             data[2*i,0] = pointsBase[i]
@@ -235,6 +234,7 @@ class SpecWidget(QWidget):
             data[2*i + 1,1] = pointsExtruded[i+1]
             data[2*i + 1,2] = pointsExtruded[i]
 
+        #handle
         data = np.insert(data,len(data),[pointsBase[-2],pointsBase[-8],pointsBase[-7]], axis=0)
         data = np.insert(data,len(data),[pointsBase[-2],pointsBase[-3],pointsBase[-7]], axis=0)
         data = np.insert(data,len(data),[pointsExtruded[-2],pointsExtruded[-8],pointsExtruded[-7]], axis=0)
@@ -247,6 +247,42 @@ class SpecWidget(QWidget):
         data = np.insert(data,len(data),[pointsBase[-10],pointsBase[-11],pointsBase[-12]], axis=0)
         data = np.insert(data,len(data),[pointsExtruded[-9],pointsExtruded[-10],pointsExtruded[-12]], axis=0)
         data = np.insert(data,len(data),[pointsExtruded[-10],pointsExtruded[-11],pointsExtruded[-12]], axis=0)
+
+        #bitting
+        prevDepth = 0
+        for i in range(self.pinNumber):
+            if prevDepth == depths[i]:
+                data = np.insert(data,len(data),[pointsBase[2*i],pointsBase[2*i+2],pointsBase[2+4*self.pinNumber-2*i]], axis=0)
+                data = np.insert(data,len(data),[pointsBase[2*i+2],pointsBase[2+4*self.pinNumber-2*i],pointsBase[4*self.pinNumber-2*i]], axis=0)
+                data = np.insert(data,len(data),[pointsExtruded[2*i],pointsExtruded[2*i+2],pointsExtruded[2+4*self.pinNumber-2*i]], axis=0)
+                data = np.insert(data,len(data),[pointsExtruded[2*i+2],pointsExtruded[2+4*self.pinNumber-2*i],pointsExtruded[4*self.pinNumber-2*i]], axis=0)
+            else:
+                data = np.insert(data,len(data),[pointsBase[2*i+1],pointsBase[2*i+2],pointsBase[4*self.pinNumber-2*i]], axis=0)
+                data = np.insert(data,len(data),[pointsBase[2*i+1],pointsBase[1+4*self.pinNumber-2*i],pointsBase[4*self.pinNumber-2*i]], axis=0)
+                data = np.insert(data,len(data),[pointsExtruded[2*i+1],pointsExtruded[2*i+2],pointsExtruded[4*self.pinNumber-2*i]], axis=0)
+                data = np.insert(data,len(data),[pointsExtruded[2*i+1],pointsExtruded[1+4*self.pinNumber-2*i],pointsExtruded[4*self.pinNumber-2*i]], axis=0)
+                if prevDepth < depths[i]:
+                    midPointBase = [pointsBase[2*i][0],pointsBase[2*i+1][1],0]
+                    midPointExtruded = [pointsBase[2*i][0],pointsBase[2*i+1][1],extrudedHeight]
+                    data = np.insert(data,len(data),[pointsBase[2*i],midPointBase,pointsBase[2*i+1]], axis=0)
+                    data = np.insert(data,len(data),[pointsBase[2+4*self.pinNumber-2*i],midPointBase,pointsBase[2*i+1]], axis=0)
+                    data = np.insert(data,len(data),[pointsBase[2+4*self.pinNumber-2*i],pointsBase[1+4*self.pinNumber-2*i],pointsBase[2*i+1]], axis=0)
+                    data = np.insert(data,len(data),[pointsExtruded[2*i],midPointExtruded,pointsExtruded[2*i+1]], axis=0)
+                    data = np.insert(data,len(data),[pointsExtruded[2+4*self.pinNumber-2*i],midPointExtruded,pointsExtruded[2*i+1]], axis=0)
+                    data = np.insert(data,len(data),[pointsExtruded[2+4*self.pinNumber-2*i],pointsExtruded[1+4*self.pinNumber-2*i],pointsExtruded[2*i+1]], axis=0)
+
+                else:
+                    midPointBase = [pointsBase[2*i+1][0],pointsBase[2*i][1],0]
+                    midPointExtruded = [pointsBase[2*i+1][0],pointsBase[2*i][1],extrudedHeight]
+                    data = np.insert(data,len(data),[pointsBase[2*i],midPointBase,pointsBase[2*i+1]], axis=0)
+                    data = np.insert(data,len(data),[pointsBase[2+4*self.pinNumber-2*i],midPointBase,pointsBase[2*i]], axis=0)
+                    data = np.insert(data,len(data),[pointsBase[2+4*self.pinNumber-2*i],pointsBase[1+4*self.pinNumber-2*i],midPointBase], axis=0)
+                    data = np.insert(data,len(data),[pointsExtruded[2*i],midPointExtruded,pointsExtruded[2*i+1]], axis=0)
+                    data = np.insert(data,len(data),[pointsExtruded[2+4*self.pinNumber-2*i],midPointExtruded,pointsExtruded[2*i]], axis=0)
+                    data = np.insert(data,len(data),[pointsExtruded[2+4*self.pinNumber-2*i],pointsExtruded[1+4*self.pinNumber-2*i],midPointExtruded], axis=0)
+            prevDepth = depths[i]
+        data = np.insert(data,len(data),[pointsBase[2*self.pinNumber],pointsBase[2*self.pinNumber+1],pointsBase[2*self.pinNumber+2]], axis=0)
+        data = np.insert(data,len(data),[pointsExtruded[2*self.pinNumber],pointsExtruded[2*self.pinNumber+1],pointsExtruded[2*self.pinNumber+2]], axis=0)
 
         #your_mesh = mesh.Mesh(data, remove_empty_areas=False)
         #your_mesh.save('new_stl_file.stl')
@@ -279,11 +315,8 @@ class MainWidget(QWidget):
         self.view.show()
 
         ## create three grids, add each to the view
-        xgrid = gl.GLGridItem()
-        self.view.addItem(xgrid)
-
-        ## rotate x and y grids to face the correct direction
-        xgrid.rotate(90, 0, 1, 0)
+        zgrid = gl.GLGridItem()
+        #self.view.addItem(zgrid)
 
         tabs.addTab(self.canvas, "Sketch")
         tabs.addTab(self.view, "3D View")
