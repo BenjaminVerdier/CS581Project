@@ -1,3 +1,5 @@
+from keyComputations import *
+
 import sys
 #from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtCore import *
@@ -7,8 +9,6 @@ import pyqtgraph as pg
 import pyqtgraph.opengl as gl
 
 import numpy as np
-
-from stl import mesh
 
 #TODO: Add dropdown menu for selecting key standards
 #TODO: (maybe) Add dropdown menu for selecting key blank
@@ -34,6 +34,7 @@ class SpecWidget(QWidget):
         self.increment = .015
         self.spacing = .156
         self.pinNumber = 6
+        self.depths = [0]*10
         self.keyMeshItem = None
 
         self.initSPinSliderLabel("tfc", "Distance to first cut (inches):",0,1,self.tfc)
@@ -133,7 +134,7 @@ class SpecWidget(QWidget):
             pin.setTickPosition(QSlider.TicksLeft)
             pin.setTickInterval(1)
             #TODO: add label for pin position underneath the sliders
-            pin.valueChanged.connect(lambda: self.changePinHeight(i))
+            pin.valueChanged.connect(self.changePinHeight)
             self.pinSliders.append(pin)
             if i < self.pinNumber:
                 self.slidersLayout.addWidget(pin)
@@ -144,7 +145,9 @@ class SpecWidget(QWidget):
 
 
     @pyqtSlot()
-    def changePinHeight(self, pinNumber):
+    def changePinHeight(self):
+        for i in range(self.pinNumber):
+            self.depths[i] = self.pinSliders[i].value()
         self.drawKey()
 
     @pyqtSlot()
@@ -164,134 +167,21 @@ class SpecWidget(QWidget):
 
     def drawKey(self):
         #2D Sketch
-        x = [0]
-        y = [0]
-        depths = []
-        for i in range(self.pinNumber):
-            x.append(self.tfc + i*self.spacing - self.rootCut/2)
-            y.append(-self.increment*self.pinSliders[i].value())
-            x.append(self.tfc + i*self.spacing + self.rootCut/2)
-            y.append(-self.increment*self.pinSliders[i].value())
-            depths.append(self.increment*self.pinSliders[i].value())
-
-        #Bottom part
-        x.append(x[-1] + self.spacing)
-        y.append(-10*self.increment)
-        #Need this to for mesh design
-        for i in range(self.pinNumber):
-            x.append(self.tfc + (self.pinNumber-1-i)*self.spacing + self.rootCut/2)
-            y.append(-10*self.increment)
-            x.append(self.tfc + (self.pinNumber-1-i)*self.spacing - self.rootCut/2)
-            y.append(-10*self.increment)
-
-        x.append(0)
-        y.append(-10*self.increment)
-
-        x.append(0)
-        y.append(-self.keyHeight + .1)
-        x.append(self.tfc+2*self.spacing)
-        y.append(-self.keyHeight + .1)
-        x.append(self.tfc+2*self.spacing)
-        y.append(-self.keyHeight)
-        x.append(0)
-        y.append(-self.keyHeight)
-
-        #Handle
-        x.append(0)
-        y.append(y[-1]-.1)
-        x.append(-.3)
-        y.append(y[-1])
-        x.append(-1.5)
-        y.append(y[-1])
-        x.append(-1.5)
-        y.append(0.7)
-        x.append(-.3)
-        y.append(0.7)
-        x.append(-.3)
-        y.append(0.1)
-        x.append(0)
-        y.append(0.1)
-        x.append(0)
-        y.append(0)
-
+        x,y = computeSketch(self.tfc, self.spacing, self.increment, self.rootCut, self.macs, self.keyHeight, self.keyLength, self.pinNumber, self.depths)
 
         self.parent().pt.setData(x,y)
         self.parent().pt2.setData([0,self.tfc + self.pinNumber*self.spacing + 0.05],[0,0])
 
         #3D render
-        extrudedHeight = 0.1
-        #This is super messy, really. Might want to change this.
-        pointsBase = list(zip(x,y,[0]*len(x)))
-        pointsExtruded = list(zip(x,y,[extrudedHeight]*len(x)))
+        data = computeMeshData(x, y, self.pinNumber, self.depths)
 
-        #sides
-        data = np.zeros((2*(len(x)-1),3,3))
-        for i in range(len(x)-1):
-            data[2*i,0] = pointsBase[i]
-            data[2*i,2] = pointsBase[i+1]
-            data[2*i,1] = pointsExtruded[i]
-            data[2*i + 1,0] = pointsBase[i+1]
-            data[2*i + 1,2] = pointsExtruded[i+1]
-            data[2*i + 1,1] = pointsExtruded[i]
-
-        #handle
-        data = np.insert(data,len(data),[pointsBase[-2],pointsBase[-8],pointsBase[-7]], axis=0)
-        data = np.insert(data,len(data),[pointsBase[-2],pointsBase[-7],pointsBase[-3]], axis=0)
-        data = np.insert(data,len(data),[pointsExtruded[-2],pointsExtruded[-7],pointsExtruded[-8]], axis=0)
-        data = np.insert(data,len(data),[pointsExtruded[-2],pointsExtruded[-3],pointsExtruded[-7]], axis=0)
-        data = np.insert(data,len(data),[pointsBase[-7],pointsBase[-6],pointsBase[-4]], axis=0)
-        data = np.insert(data,len(data),[pointsBase[-6],pointsBase[-5],pointsBase[-4]], axis=0)
-        data = np.insert(data,len(data),[pointsExtruded[-7],pointsExtruded[-4],pointsExtruded[-6]], axis=0)
-        data = np.insert(data,len(data),[pointsExtruded[-6],pointsExtruded[-4],pointsExtruded[-5]], axis=0)
-        data = np.insert(data,len(data),[pointsBase[-9],pointsBase[-12],pointsBase[-10]], axis=0)
-        data = np.insert(data,len(data),[pointsBase[-10],pointsBase[-12],pointsBase[-11]], axis=0)
-        data = np.insert(data,len(data),[pointsExtruded[-9],pointsExtruded[-10],pointsExtruded[-12]], axis=0)
-        data = np.insert(data,len(data),[pointsExtruded[-10],pointsExtruded[-11],pointsExtruded[-12]], axis=0)
-
-        #bitting
-        prevDepth = 0
-        for i in range(self.pinNumber):
-            if prevDepth == depths[i]:
-                data = np.insert(data,len(data),[pointsBase[2*i],pointsBase[2*i+2],pointsBase[2+4*self.pinNumber-2*i]], axis=0)
-                data = np.insert(data,len(data),[pointsBase[2*i+2],pointsBase[4*self.pinNumber-2*i],pointsBase[2+4*self.pinNumber-2*i]], axis=0)
-                data = np.insert(data,len(data),[pointsExtruded[2*i+2],pointsExtruded[2*i],pointsExtruded[2+4*self.pinNumber-2*i]], axis=0)
-                data = np.insert(data,len(data),[pointsExtruded[2*i+2],pointsExtruded[2+4*self.pinNumber-2*i],pointsExtruded[4*self.pinNumber-2*i]], axis=0)
-            else:
-                data = np.insert(data,len(data),[pointsBase[2*i+1],pointsBase[2*i+2],pointsBase[4*self.pinNumber-2*i]], axis=0)
-                data = np.insert(data,len(data),[pointsBase[2*i+1],pointsBase[4*self.pinNumber-2*i],pointsBase[1+4*self.pinNumber-2*i]], axis=0)
-                data = np.insert(data,len(data),[pointsExtruded[2*i+2],pointsExtruded[2*i+1],pointsExtruded[4*self.pinNumber-2*i]], axis=0)
-                data = np.insert(data,len(data),[pointsExtruded[2*i+1],pointsExtruded[1+4*self.pinNumber-2*i],pointsExtruded[4*self.pinNumber-2*i]], axis=0)
-                if prevDepth < depths[i]:
-                    midPointBase = [pointsBase[2*i][0],pointsBase[2*i+1][1],0]
-                    midPointExtruded = [pointsBase[2*i][0],pointsBase[2*i+1][1],extrudedHeight]
-                    data = np.insert(data,len(data),[pointsBase[2*i],pointsBase[2*i+1],midPointBase], axis=0)
-                    data = np.insert(data,len(data),[pointsBase[2+4*self.pinNumber-2*i],midPointBase,pointsBase[2*i+1]], axis=0)
-                    data = np.insert(data,len(data),[pointsBase[1+4*self.pinNumber-2*i],pointsBase[2+4*self.pinNumber-2*i],pointsBase[2*i+1]], axis=0)
-                    data = np.insert(data,len(data),[pointsExtruded[2*i],midPointExtruded,pointsExtruded[2*i+1]], axis=0)
-                    data = np.insert(data,len(data),[pointsExtruded[2+4*self.pinNumber-2*i],pointsExtruded[2*i+1],midPointExtruded], axis=0)
-                    data = np.insert(data,len(data),[pointsExtruded[2+4*self.pinNumber-2*i],pointsExtruded[1+4*self.pinNumber-2*i],pointsExtruded[2*i+1]], axis=0)
-
-                else:
-                    midPointBase = [pointsBase[2*i+1][0],pointsBase[2*i][1],0]
-                    midPointExtruded = [pointsBase[2*i+1][0],pointsBase[2*i][1],extrudedHeight]
-                    data = np.insert(data,len(data),[pointsBase[2*i],pointsBase[2*i+1],midPointBase], axis=0)
-                    data = np.insert(data,len(data),[pointsBase[2+4*self.pinNumber-2*i],pointsBase[2*i],midPointBase], axis=0)
-                    data = np.insert(data,len(data),[pointsBase[2+4*self.pinNumber-2*i],midPointBase,pointsBase[1+4*self.pinNumber-2*i]], axis=0)
-                    data = np.insert(data,len(data),[pointsExtruded[2*i],midPointExtruded,pointsExtruded[2*i+1]], axis=0)
-                    data = np.insert(data,len(data),[pointsExtruded[2+4*self.pinNumber-2*i],midPointExtruded,pointsExtruded[2*i]], axis=0)
-                    data = np.insert(data,len(data),[pointsExtruded[2+4*self.pinNumber-2*i],pointsExtruded[1+4*self.pinNumber-2*i],midPointExtruded], axis=0)
-            prevDepth = depths[i]
-        data = np.insert(data,len(data),[pointsBase[2*self.pinNumber],pointsBase[2*self.pinNumber+1],pointsBase[2*self.pinNumber+2]], axis=0)
-        data = np.insert(data,len(data),[pointsExtruded[2*self.pinNumber],pointsExtruded[2*self.pinNumber+2],pointsExtruded[2*self.pinNumber+1]], axis=0)
-
-        key = mesh.Mesh(np.zeros(data.shape[0], dtype=mesh.Mesh.dtype))
-        key.vectors = data
-        key.save('key.stl')
         keyMeshData = gl.MeshData(vertexes=data)
         if self.keyMeshItem:
             self.parent().view.removeItem(self.keyMeshItem)
         self.keyMeshItem = gl.GLMeshItem(meshdata = keyMeshData)
         self.parent().view.addItem(self.keyMeshItem)
+
+        #generateSTL(data)
 
 class MainWidget(QWidget):
 
