@@ -1,36 +1,36 @@
 import numpy as np
 from stl import mesh
 
-def computeSketch(tfc, spacing, increment, rootCut, macs, keyHeight, keyLength, pinNumber, depths):
+def computeSketch(specs, depths):
     x = [0]
     y = [0]
-    for i in range(pinNumber):
-        x.append(tfc + i*spacing - rootCut/2)
-        y.append(-increment*depths[i])
-        x.append(tfc + i*spacing + rootCut/2)
-        y.append(-increment*depths[i])
+    for i in range(specs["pinNumber"]):
+        x.append(specs["tfc"] + i*specs["spacing"] - specs["rootCut"]/2)
+        y.append(-specs["increment"]*depths[i])
+        x.append(specs["tfc"] + i*specs["spacing"] + specs["rootCut"]/2)
+        y.append(-specs["increment"]*depths[i])
 
     #Bottom part
-    x.append(x[-1] + spacing)
-    y.append(-10*increment)
+    x.append(specs["keyLength"])
+    y.append(-specs["maxDepth"]*specs["increment"])
     #Need this to for mesh design
-    for i in range(pinNumber):
-        x.append(tfc + (pinNumber-1-i)*spacing + rootCut/2)
-        y.append(-10*increment)
-        x.append(tfc + (pinNumber-1-i)*spacing - rootCut/2)
-        y.append(-10*increment)
+    for i in range(specs["pinNumber"]):
+        x.append(specs["tfc"] + (specs["pinNumber"]-1-i)*specs["spacing"] + specs["rootCut"]/2)
+        y.append(-10*specs["increment"])
+        x.append(specs["tfc"] + (specs["pinNumber"]-1-i)*specs["spacing"] - specs["rootCut"]/2)
+        y.append(-10*specs["increment"])
 
     x.append(0)
-    y.append(-10*increment)
+    y.append(-10*specs["increment"])
 
     x.append(0)
-    y.append(-keyHeight + .1)
-    x.append(tfc+2*spacing)
-    y.append(-keyHeight + .1)
-    x.append(tfc+2*spacing)
-    y.append(-keyHeight)
+    y.append(-specs["keyHeight"] + .05)
+    x.append(specs["tfc"]+2*specs["spacing"])
+    y.append(-specs["keyHeight"] + .05)
+    x.append(specs["tfc"]+2*specs["spacing"])
+    y.append(-specs["keyHeight"])
     x.append(0)
-    y.append(-keyHeight)
+    y.append(-specs["keyHeight"])
 
     #Handle
     x.append(0)

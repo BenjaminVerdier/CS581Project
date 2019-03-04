@@ -7,6 +7,8 @@
     "rootCut":0.031,
     "macs":7,
     "keyHeight":0.335,
-    "pinNumber":6
+    "keyLength":1.2,
+    "pinNumber":6,
+    "maxDepth":9
   }
 }

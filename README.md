@@ -40,4 +40,3 @@ Click "Save .STL" to save the 3D model in .stl format.
 Next steps in the development:
 
 - Add more standards to bittings.json
-- Add key blanks specs (length and height)
