@@ -32,13 +32,14 @@ class SpecWidget(QWidget):
         #Values used are for Schlage Classic, except key length
         self.specs = {
         "keyHeight" : .335,
-        "keyLength" : 2,
+        "keyLength":1.2,
         "macs" : 7,
         "rootCut" : .031,
         "tfc" : .231,
         "increment" : .015,
         "spacing" : .156,
-        "pinNumber" : 6
+        "pinNumber" : 6,
+        "maxDepth":9
         }
 
         self.spinners = {}
@@ -196,7 +197,7 @@ class SpecWidget(QWidget):
 
     def drawKey(self):
         #2D Sketch
-        x,y = computeSketch(self.specs["tfc"], self.specs["spacing"], self.specs["increment"], self.specs["rootCut"], self.specs["macs"], self.specs["keyHeight"], self.specs["keyLength"], self.specs["pinNumber"], self.depths)
+        x,y = computeSketch(self.specs, self.depths)
 
         self.parent().pt.setData(x,y)
         self.parent().pt2.setData([0,self.specs["tfc"] + self.specs["pinNumber"]*self.specs["spacing"] + 0.05],[0,0])
