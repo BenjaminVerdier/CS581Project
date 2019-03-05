@@ -59,30 +59,32 @@ class SpecWidget(QWidget):
         #self.initSPinSliderLabel("keyLength", "Length of the key (inches):",0, 2,self.specs["keyLength"])
         self.initSPinSliderLabel("pinNumber", "Number of pins:", 1, 10,self.specs["pinNumber"], 1)
 
-        self.initBittingSliders()
 
         #Spacing between left and right side
         self.horizontal.addSpacing(100)
 
         #Right side of spec widget
-        rightSideLayout = QVBoxLayout()
-        self.horizontal.addLayout(rightSideLayout)
+        self.rightSideLayout = QVBoxLayout()
+        self.horizontal.addLayout(self.rightSideLayout)
 
         standardLabel = QLabel("Key Bitting Standard:")
-        rightSideLayout.addWidget(standardLabel)
+        self.rightSideLayout.addWidget(standardLabel)
 
         with open("../resources/bittings.json", "r") as read_file:
             self.bittings = json.load(read_file)
         self.standardCombo = QComboBox(self)
-        rightSideLayout.addWidget(self.standardCombo)
+        self.rightSideLayout.addWidget(self.standardCombo)
         for bitting in self.bittings:
             self.standardCombo.addItem(bitting)
         self.standardCombo.activated.connect(self.bitStandardSelect)
 
-        rightSideLayout.addStretch()
+        self.initBittingSliders()
+        self.initBittingSpinner()
+
+        self.rightSideLayout.addStretch()
 
         saveBtn = QPushButton("Save .STL")
-        rightSideLayout.addWidget(saveBtn)
+        self.rightSideLayout.addWidget(saveBtn)
         saveBtn.clicked.connect(self.saveSTL)
 
         self.show()
@@ -91,6 +93,8 @@ class SpecWidget(QWidget):
     def bitStandardSelect(self):
         std = self.standardCombo.currentText()
         for property in self.bittings[std]:
+            if property == "keyLength" or property == "maxDepth":
+                continue
             self.specs[property] = self.bittings[std][property]
             self.spinners[property].setValue(self.specs[property])
 
@@ -157,27 +161,54 @@ class SpecWidget(QWidget):
     def initBittingSliders(self):
         self.slidersLayout = QHBoxLayout()
         self.pinSliders = []
+        #Not necessary but we don't want to mess with everything. TODO: refactor this
+        self.pinLabels = []
         for i in range(10):
+            vlay = QVBoxLayout()
             pin = QSlider(Qt.Vertical)
+            vlay.addWidget(pin)
             pin.setMinimum(0)
             pin.setMaximum(9)
             pin.setTickPosition(QSlider.TicksLeft)
             pin.setTickInterval(1)
-            #TODO: add label for pin position underneath the sliders
+            pinLabel = QLabel("0")
+            vlay.addWidget(pinLabel)
             pin.valueChanged.connect(self.changePinHeight)
             self.pinSliders.append(pin)
+            self.pinLabels.append(pinLabel)
+
             if i < self.specs["pinNumber"]:
-                self.slidersLayout.addWidget(pin)
+                self.slidersLayout.addLayout(vlay)
             else:
                 self.pinSliders[i].hide()
+                self.pinLabels[i].hide()
                 self.slidersLayout.addSpacing(74)
-        self.vertical.addLayout(self.slidersLayout)
+        self.rightSideLayout.addWidget(QLabel("Bitting:"))
+        self.rightSideLayout.addLayout(self.slidersLayout)
 
+    def initBittingSpinner(self):
+        hbox = QHBoxLayout()
+        hbox.addWidget(QLabel("Bitting Code:"))
+        bittingBox = QLineEdit("000000")
+        hbox.addWidget(bittingBox)
+        updateBtn = QPushButton("Update Bitting")
+        hbox.addWidget(updateBtn)
+        updateBtn.clicked.connect(lambda: self.updateAllPins(bittingBox.text()))
+        self.rightSideLayout.addLayout(hbox)
+
+
+    @pyqtSlot()
+    def updateAllPins(self, stringVal):
+        for i in range(self.specs["pinNumber"]):
+            if len(stringVal) == i:
+                break
+            self.pinSliders[i].setValue(int(stringVal[i]))
 
     @pyqtSlot()
     def changePinHeight(self):
         for i in range(self.specs["pinNumber"]):
             self.depths[i] = self.pinSliders[i].value()
+            self.pinLabels[i].setText(str(self.pinSliders[i].value()))
         self.drawKey()
 
     @pyqtSlot()
@@ -187,10 +218,15 @@ class SpecWidget(QWidget):
             self.slidersLayout.removeItem(item)
         for i in range(10):
             if i < self.specs["pinNumber"]:
+                vlay = QVBoxLayout()
                 self.pinSliders[i].show()
-                self.slidersLayout.addWidget(self.pinSliders[i])
+                vlay.addWidget(self.pinSliders[i])
+                self.pinLabels[i].show()
+                vlay.addWidget(self.pinLabels[i])
+                self.slidersLayout.addLayout(vlay)
             else:
                 self.pinSliders[i].hide()
+                self.pinLabels[i].hide()
                 self.slidersLayout.addSpacing(74)
         self.drawKey()
 
@@ -242,11 +278,12 @@ class MainWidget(QWidget):
 
         tabs.addTab(self.canvas, "Sketch")
         tabs.addTab(self.view, "3D View")
+        tabs.setMaximumHeight(600)
 
         layout.addWidget(tabs,0,0,5,15)
 
         specs = SpecWidget()
-        specs.setMaximumHeight(700)
+        specs.setMaximumHeight(600)
         layout.addWidget(specs,15,0)
         specs.drawKey()
 

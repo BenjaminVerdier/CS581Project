@@ -11,17 +11,17 @@ def computeSketch(specs, depths):
         y.append(-specs["increment"]*depths[i])
 
     #Bottom part
-    x.append(specs["keyLength"])
-    y.append(-specs["maxDepth"]*specs["increment"])
+    x.append(specs["tfc"] + (specs["pinNumber"])*specs["spacing"] + specs["rootCut"]/2)
+    y.append(-(specs["maxDepth"]+1)*specs["increment"])
     #Need this to for mesh design
     for i in range(specs["pinNumber"]):
         x.append(specs["tfc"] + (specs["pinNumber"]-1-i)*specs["spacing"] + specs["rootCut"]/2)
-        y.append(-10*specs["increment"])
+        y.append(-(specs["maxDepth"]+1)*specs["increment"])
         x.append(specs["tfc"] + (specs["pinNumber"]-1-i)*specs["spacing"] - specs["rootCut"]/2)
-        y.append(-10*specs["increment"])
+        y.append(-(specs["maxDepth"]+1)*specs["increment"])
 
     x.append(0)
-    y.append(-10*specs["increment"])
+    y.append(-(specs["maxDepth"]+1)*specs["increment"])
 
     x.append(0)
     y.append(-specs["keyHeight"] + .05)
