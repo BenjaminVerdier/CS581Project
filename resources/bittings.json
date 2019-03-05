@@ -10,5 +10,29 @@
     "keyLength":1.2,
     "pinNumber":6,
     "maxDepth":9
-  }
+  },
+    "Kaba Peaks 140 Family A2":
+    {
+      "tfc":0.136,
+      "spacing":0.140,
+      "increment":0.0125,
+      "rootCut":0.046,
+      "macs":8,
+      "keyHeight":0.3187,
+      "keyLength":0.972,
+      "pinNumber":6,
+      "maxDepth":9
+    },
+      "Arrow New Large Pin":
+      {
+        "tfc":0.265,
+        "spacing":0.155,
+        "increment":0.014,
+        "rootCut":0.046,
+        "macs":7,
+        "keyHeight":0.312,
+        "keyLength":1.195,
+        "pinNumber":6,
+        "maxDepth":9
+      }
 }
