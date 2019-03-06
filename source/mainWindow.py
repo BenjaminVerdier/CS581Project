@@ -12,9 +12,23 @@ import numpy as np
 
 import json
 
-#TODO: Add dropdown menu for selecting key standards
 #TODO: (maybe) Add dropdown menu for selecting key blank
-
+"""
+json template for key specs:
+,
+"name":
+{
+"tfc":0.265,
+"spacing":0.155,
+"increment":0.014,
+"rootCut":0.046,
+"macs":7,
+"keyHeight":0.312,
+"keyLength":1.195,
+"pinNumber":6,
+"maxDepth":9
+}
+"""
 class SpecWidget(QWidget):
 
     def __init__(self):
@@ -26,7 +40,7 @@ class SpecWidget(QWidget):
         self.horizontal = QHBoxLayout()
         self.vertical = QVBoxLayout()
         self.horizontal.addLayout(self.vertical)
-        self.setMaximumWidth(800)
+        self.setMaximumWidth(950)
         self.setLayout(self.horizontal)
 
         #Values used are for Schlage Classic, except key length
@@ -54,10 +68,11 @@ class SpecWidget(QWidget):
         self.initSPinSliderLabel("spacing","Distance between cuts (inches):",0,1,self.specs["spacing"])
         self.initSPinSliderLabel("increment","Pin height increment (inches):", 0, .2,self.specs["increment"])
         self.initSPinSliderLabel("rootCut", "Width of the cuts (inches):",0, 1,self.specs["rootCut"])
-        self.initSPinSliderLabel("macs", "MACS:",0, 10,self.specs["macs"], 1)
         self.initSPinSliderLabel("keyHeight", "Height of the key (inches):",0, 1,self.specs["keyHeight"])
         #self.initSPinSliderLabel("keyLength", "Length of the key (inches):",0, 2,self.specs["keyLength"])
         self.initSPinSliderLabel("pinNumber", "Number of pins:", 1, 10,self.specs["pinNumber"], 1)
+        self.initSPinSliderLabel("macs", "MACS:",0, 10,self.specs["macs"], 1)
+        self.initSPinSliderLabel("maxDepth", "Maximum Cut Depth:",0, 10,self.specs["maxDepth"], 1)
 
 
         #Spacing between left and right side
@@ -76,12 +91,19 @@ class SpecWidget(QWidget):
         self.rightSideLayout.addWidget(self.standardCombo)
         for bitting in self.bittings:
             self.standardCombo.addItem(bitting)
+        self.standardCombo.setCurrentIndex(self.standardCombo.findText("Schlage Classic"))
         self.standardCombo.activated.connect(self.bitStandardSelect)
 
         self.initBittingSliders()
         self.initBittingSpinner()
 
         self.rightSideLayout.addStretch()
+        self.macsLabel = QLabel("Current bitting complies with MACS.")
+        self.macsLabel.setStyleSheet('color:green')
+        self.maxDepthLabel = QLabel("Current bitting complies with maximum cut depth.")
+        self.maxDepthLabel.setStyleSheet('color:green')
+        self.rightSideLayout.addWidget(self.macsLabel)
+        self.rightSideLayout.addWidget(self.maxDepthLabel)
 
         saveBtn = QPushButton("Save .STL")
         self.rightSideLayout.addWidget(saveBtn)
@@ -232,6 +254,19 @@ class SpecWidget(QWidget):
 
 
     def drawKey(self):
+        #Warning labels
+        self.macsLabel.setText("Current bitting complies with MACS.")
+        self.macsLabel.setStyleSheet('color:green')
+        self.maxDepthLabel.setText("Current bitting complies with maximum cut depth.")
+        self.maxDepthLabel.setStyleSheet('color:green')
+        for i in range(self.specs["pinNumber"]):
+            if i < (self.specs["pinNumber"] - 1):
+                if abs(self.depths[i]-self.depths[i+1]) > self.specs["macs"]:
+                    self.macsLabel.setText("Current bitting does not comply with MACS.")
+                    self.macsLabel.setStyleSheet('color:red')
+            if self.depths[i] > self.specs["maxDepth"]:
+                self.maxDepthLabel.setText("Current bitting does not comply with maximum cut depth.")
+                self.maxDepthLabel.setStyleSheet('color:red')
         #2D Sketch
         x,y = computeSketch(self.specs, self.depths)
 
