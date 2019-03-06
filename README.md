@@ -39,4 +39,4 @@ Click "Save .STL" to save the 3D model in .stl format.
 
 Next steps in the development:
 
-- Add depth to bottom part for tensioning
+- Add depth to bottom part for tensioning.
