@@ -105,3 +105,6 @@ venv.bak/
 
 # stl file generation
 *.stl
+
+# dxf file generation
+*.dxf

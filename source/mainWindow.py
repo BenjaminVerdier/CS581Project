@@ -105,9 +105,12 @@ class SpecWidget(QWidget):
         self.rightSideLayout.addWidget(self.macsLabel)
         self.rightSideLayout.addWidget(self.maxDepthLabel)
 
-        saveBtn = QPushButton("Save .STL")
-        self.rightSideLayout.addWidget(saveBtn)
-        saveBtn.clicked.connect(self.saveSTL)
+        dxfBtn = QPushButton("Save .DXF")
+        self.rightSideLayout.addWidget(dxfBtn)
+        dxfBtn.clicked.connect(self.saveDXF)
+        stlBtn = QPushButton("Save .STL")
+        self.rightSideLayout.addWidget(stlBtn)
+        stlBtn.clicked.connect(self.saveSTL)
 
         self.show()
 
@@ -127,6 +130,14 @@ class SpecWidget(QWidget):
             pass
         else:
             generateSTL(self.data, filename)
+
+    @pyqtSlot()
+    def saveDXF(self):
+        filename = QFileDialog.getSaveFileName(self, 'Save File', '../resources/key.dxf', '*.dxf')
+        if filename == "":
+            pass
+        else:
+            generateDXF(self.x, self.y, filename)
 
     @pyqtSlot()
     def changeSliderValue(self, spinner, slider, spec, step):
@@ -268,13 +279,13 @@ class SpecWidget(QWidget):
                 self.maxDepthLabel.setText("Current bitting does not comply with maximum cut depth.")
                 self.maxDepthLabel.setStyleSheet('color:red')
         #2D Sketch
-        x,y = computeSketch(self.specs, self.depths)
+        self.x, self.y = computeSketch(self.specs, self.depths)
 
-        self.parent().pt.setData(x,y)
+        self.parent().pt.setData(self.x, self.y)
         self.parent().pt2.setData([0,self.specs["tfc"] + self.specs["pinNumber"]*self.specs["spacing"] + 0.05],[0,0])
 
         #3D render
-        self.data = computeMeshData(x, y, self.specs["pinNumber"], self.depths, 0.03)
+        self.data = computeMeshData(self.x, self.y, self.specs["pinNumber"], self.depths, 0.03)
 
         keyMeshData = gl.MeshData(vertexes=self.data)
         if self.keyMeshItem:

@@ -1,5 +1,6 @@
 import numpy as np
 from stl import mesh
+import ezdxf
 
 def computeSketch(specs, depths):
     x = [0]
@@ -126,3 +127,11 @@ def generateSTL(data, name="key.stl"):
     key = mesh.Mesh(np.zeros(data.shape[0], dtype=mesh.Mesh.dtype))
     key.vectors = data
     key.save(name)
+
+def generateDXF(x, y, name="key.dxf"):
+    drawing = ezdxf.new(dxfversion='AC1024')
+    modelspace = drawing.modelspace()
+    drawing.header.__setitem__("$INSUNITS", 1)
+    for i in range (len(x)-1):
+        modelspace.add_line((x[i], y[i]), (x[i+1], y[i+1]), dxfattribs={'color': 7})
+    drawing.saveas(name)
