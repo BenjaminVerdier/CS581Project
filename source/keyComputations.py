@@ -13,16 +13,16 @@ def computeSketch(specs, depths):
 
     #Bottom part
     x.append(specs["tfc"] + (specs["pinNumber"])*specs["spacing"] + specs["rootCut"]/2)
-    y.append(-(specs["maxDepth"]+1)*specs["increment"])
+    y.append(-0.132)
     #Need this to for mesh design
     for i in range(specs["pinNumber"]):
         x.append(specs["tfc"] + (specs["pinNumber"]-1-i)*specs["spacing"] + specs["rootCut"]/2)
-        y.append(-(specs["maxDepth"]+1)*specs["increment"])
+        y.append(-0.132)
         x.append(specs["tfc"] + (specs["pinNumber"]-1-i)*specs["spacing"] - specs["rootCut"]/2)
-        y.append(-(specs["maxDepth"]+1)*specs["increment"])
+        y.append(-0.132)
 
     x.append(0)
-    y.append(-(specs["maxDepth"]+1)*specs["increment"])
+    y.append(-0.132)
 
     x.append(0)
     y.append(-specs["keyHeight"] + .1)
@@ -62,7 +62,7 @@ def computeMeshData(x, y, pinNumber, depths, extrudedHeight = 0.065):
     for i in range(9,13):
         pointsExtruded[-i] = (pointsExtruded[-i][0],pointsExtruded[-i][1], 0.035)
     for i in range(4*pinNumber + 3):
-        pointsBase[i] = (pointsBase[i][0],pointsBase[i][1], 0.045)
+        pointsBase[i] = (pointsBase[i][0],pointsBase[i][1], 0.02)
     #sides
     data = np.zeros((2*(len(x)-1),3,3))
     for i in range(len(x)-1):
@@ -114,7 +114,7 @@ def computeMeshData(x, y, pinNumber, depths, extrudedHeight = 0.065):
             data = np.insert(data,len(data),[pointsExtruded[2*i+2],pointsExtruded[2*i+1],pointsExtruded[4*pinNumber-2*i]], axis=0)
             data = np.insert(data,len(data),[pointsExtruded[2*i+1],pointsExtruded[1+4*pinNumber-2*i],pointsExtruded[4*pinNumber-2*i]], axis=0)
             if prevDepth < depths[i]:
-                midPointBase = [pointsBase[2*i][0],pointsBase[2*i+1][1],0]
+                midPointBase = [pointsBase[2*i][0],pointsBase[2*i+1][1],0.02]
                 midPointExtruded = [pointsBase[2*i][0],pointsBase[2*i+1][1],extrudedHeight]
                 data = np.insert(data,len(data),[pointsBase[2*i],pointsBase[2*i+1],midPointBase], axis=0)
                 data = np.insert(data,len(data),[pointsBase[2+4*pinNumber-2*i],midPointBase,pointsBase[2*i+1]], axis=0)
@@ -124,7 +124,7 @@ def computeMeshData(x, y, pinNumber, depths, extrudedHeight = 0.065):
                 data = np.insert(data,len(data),[pointsExtruded[2+4*pinNumber-2*i],pointsExtruded[1+4*pinNumber-2*i],pointsExtruded[2*i+1]], axis=0)
 
             else:
-                midPointBase = [pointsBase[2*i+1][0],pointsBase[2*i][1],0]
+                midPointBase = [pointsBase[2*i+1][0],pointsBase[2*i][1],0.02]
                 midPointExtruded = [pointsBase[2*i+1][0],pointsBase[2*i][1],extrudedHeight]
                 data = np.insert(data,len(data),[pointsBase[2*i],pointsBase[2*i+1],midPointBase], axis=0)
                 data = np.insert(data,len(data),[pointsBase[2+4*pinNumber-2*i],pointsBase[2*i],midPointBase], axis=0)
