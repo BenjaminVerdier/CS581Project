@@ -285,7 +285,7 @@ class SpecWidget(QWidget):
         self.parent().pt2.setData([0,self.specs["tfc"] + self.specs["pinNumber"]*self.specs["spacing"] + 0.05],[0,0])
 
         #3D render
-        self.data = computeMeshData(self.x, self.y, self.specs["pinNumber"], self.depths, 0.03)
+        self.data = computeMeshData(self.x, self.y, self.specs["pinNumber"], self.depths, 0.065)
 
         keyMeshData = gl.MeshData(vertexes=self.data)
         if self.keyMeshItem:
