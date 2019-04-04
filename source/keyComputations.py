@@ -63,12 +63,9 @@ def computeMeshData(x, y, pinNumber, depths, extrudedHeight = 0.065):
         pointsExtruded[-i] = (pointsExtruded[-i][0],pointsExtruded[-i][1], 0.035)
     for i in range(4*pinNumber + 3):
         pointsBase[i] = (pointsBase[i][0],pointsBase[i][1], 0.045)
-    print(pointsBase[-12:-9])
     #sides
     data = np.zeros((2*(len(x)-1),3,3))
     for i in range(len(x)-1):
-        if i == 4*pinNumber + 2 or i == 4*pinNumber + 6:
-            continue
         data[2*i,0] = pointsBase[i]
         data[2*i,2] = pointsBase[i+1]
         data[2*i,1] = pointsExtruded[i]
@@ -92,17 +89,16 @@ def computeMeshData(x, y, pinNumber, depths, extrudedHeight = 0.065):
 
     #Front face
     #side of top part
-    # data = np.insert(data,len(data),[pointsBase[0],pointsBase[-13],(pointsBase[0][0],pointsBase[0][1], 0)], axis=0)
-    # data = np.insert(data,len(data),[(pointsBase[-13][0],pointsBase[-13][1], 0),pointsBase[-13],(pointsBase[0][0],pointsBase[0][1], 0)], axis=0)
+    data = np.insert(data,len(data),[pointsBase[0],pointsBase[-13],(pointsBase[0][0],pointsBase[0][1], 0)], axis=0)
+    data = np.insert(data,len(data),[pointsBase[-13],(pointsBase[-13][0],pointsBase[-13][1], 0),(pointsBase[0][0],pointsBase[0][1], 0)], axis=0)
     #between top and botton
-    # data = np.insert(data,len(data),[pointsExtruded[-13],pointsBase[-12],(pointsBase[-13][0],pointsBase[-13][1], 0)], axis=0)
-    # data = np.insert(data,len(data),[(pointsBase[-12][0],pointsBase[-12][1], extrudedHeight),pointsBase[-12],pointsExtruded[-13]], axis=0)
+    data = np.insert(data,len(data),[pointsExtruded[-13],(pointsBase[-12][0],pointsBase[-12][1], 0),(pointsBase[-13][0],pointsBase[-13][1], 0)], axis=0)
+    data = np.insert(data,len(data),[(pointsBase[-12][0],pointsBase[-12][1], extrudedHeight),pointsExtruded[-12],pointsExtruded[-13]], axis=0)
     #side of bottom part
-    # data = np.insert(data,len(data),[pointsExtruded[-9],(pointsBase[-12][0],pointsBase[-12][1], extrudedHeight),pointsExtruded[-12]], axis=0)
-    # data = np.insert(data,len(data),[pointsExtruded[-9],(pointsBase[-12][0],pointsBase[-12][1], extrudedHeight),(pointsBase[-9][0],pointsBase[-9][1], extrudedHeight)], axis=0)
+    data = np.insert(data,len(data),[(pointsBase[-12][0],pointsBase[-12][1], extrudedHeight),pointsExtruded[-9],pointsExtruded[-12]], axis=0)
+    data = np.insert(data,len(data),[pointsExtruded[-9],(pointsBase[-12][0],pointsBase[-12][1], extrudedHeight),(pointsBase[-9][0],pointsBase[-9][1], extrudedHeight)], axis=0)
     #bottom of bottom part
-    # data = np.insert(data,len(data),[pointsBase[-9],pointsBase[-8],pointsExtruded[-8]], axis=0)
-    # data = np.insert(data,len(data),[pointsBase[-9],(pointsBase[-9][0],pointsBase[-9][1], extrudedHeight),pointsExtruded[-8]], axis=0)
+    data = np.insert(data,len(data),[pointsExtruded[-9],(pointsBase[-9][0],pointsBase[-9][1], extrudedHeight),pointsExtruded[-8]], axis=0)
 
     #bitting
     prevDepth = 0
