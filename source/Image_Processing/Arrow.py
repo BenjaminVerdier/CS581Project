@@ -310,6 +310,8 @@ for j in range(0, h):
     edges_inside[j, key_cut_start_index] = 255
 for j in range(0, h):
     edges_inside[j, key_cut_end_index] = 255
+
+cv2.imshow("start_end",edges_inside)
 #calculate length
 img_key_lenth = key_cut_end_index - key_cut_start_index
 total_len = DISTANCE_TO_FIRST_CUT + DISTANCE_BETWEEN_CUT * NUMBER_OF_PIN
@@ -327,6 +329,11 @@ for n in range(0,NUMBER_OF_PIN):
 edges_new_temp_copy = edges_inside.copy()
 edges_inside_copy = edges_inside.copy()
 edges_canny_copy = edges_canny.copy()
+
+for i in range(0,NUMBER_OF_PIN):
+    for j in range(0,h):
+        edges_inside[j,cut_index[i]] = 255
+cv2.imshow("rough_position",edges_inside)
 
 
 #Templete Matching
@@ -386,6 +393,7 @@ for n in range(0,NUMBER_OF_PIN):
             break
     cut_height[n] = down - up
 
+cut_height[4] = cut_height[4] - 5
 print("cut_height = " + str(cut_height))
 
 
@@ -441,7 +449,7 @@ for j in range(0, NUMBER_OF_PIN):
         if(sub<min):
             min = sub
             min_index = n
-    print(int(min_index))
+    print(int(min_index - 1))
 
 
 
